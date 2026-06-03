@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.saymo_test_final"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
