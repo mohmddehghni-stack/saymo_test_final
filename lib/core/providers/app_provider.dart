@@ -77,9 +77,15 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setAvatarUrl(String? url) {
+  void setAvatarUrl(String? url) async {
     _avatarUrl = url;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    if (url != null) {
+      await prefs.setString('avatarUrl', url);
+    } else {
+      await prefs.remove('avatarUrl');
+    }
   }
 
   void connectPartner(
@@ -137,9 +143,15 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setPartnerAvatarUrl(String? url) {
+  void setPartnerAvatarUrl(String? url) async {
     _partnerAvatarUrl = url;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    if (url != null) {
+      await prefs.setString('partnerAvatarUrl', url);
+    } else {
+      await prefs.remove('partnerAvatarUrl');
+    }
   }
 
   void setUserId(String id) async {

@@ -44,9 +44,6 @@ void main() async {
   await appProvider.loadFromStorage();
 
   final prefs = await SharedPreferences.getInstance();
-  print('🔍 SharedPreferences avatarUrl: ${prefs.getString('avatarUrl')}');
-  print(
-      '🔍 SharedPreferences partnerAvatarUrl: ${prefs.getString('partnerAvatarUrl')}');
 
   final momentProvider = MomentProvider();
 
@@ -209,7 +206,11 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: SplashPage(nextPage: const WelcomePage()),
+      home: SplashPage(
+        nextPage: appProvider.userId != null && appProvider.userId!.isNotEmpty
+            ? const HomePage()
+            : const WelcomePage(),
+      ),
       routes: {
         '/register': (context) => const RegisterNewPage(),
         '/register-chat': (context) => const RegisterChatPage(),
