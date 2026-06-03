@@ -11,52 +11,49 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # ================= CORE STATE =================
+  # STATE
   provider: ^6.1.5
   shared_preferences: ^2.5.5
 
-  # ================= LOCAL DB =================
+  # DB
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # ================= NETWORK =================
+  # OTP
+  sms_autofill: ^2.4.0
+  pin_code_fields: ^8.0.1
+
+  # NETWORK
   http: ^1.6.0
   web_socket_channel: ^3.0.3
 
-  # ================= MEDIA =================
+  # MEDIA
   video_player: ^2.11.1
   image_picker: ^1.2.2
   file_picker: ^8.3.7
   cached_network_image: ^3.4.1
 
-  # ================= UI =================
+  # UI
   lottie: ^3.3.3
   shimmer: ^3.0.0
-  pinput: ^3.0.1
-  animated_emoji: ^3.2.0   # فقط اگر لازم داری
 
-  # ================= UTIL =================
+  # REMOVE THIS if possible
+  animated_emoji: ^3.2.0
+
+  # UTIL
   shamsi_date: ^1.1.1
   persian_datetime_picker: ^3.2.0
   geolocator: ^13.0.4
 
-  # ================= DEVICE =================
+  # DEVICE
   device_info_plus: ^11.5.0
   package_info_plus: ^8.3.1
   share_plus: ^10.1.4
 
-  # ================= CONNECTIVITY =================
   connectivity_plus: ^7.1.1
-
-  # ================= IMAGE PROCESS =================
   flutter_image_compress: ^2.4.0
 
-  # ================= CAMERA =================
   camera: ^0.11.4
-
-  # ================= OTHER =================
-  flutter_localizations:
-    sdk: flutter
 
 dev_dependencies:
   flutter_test:
