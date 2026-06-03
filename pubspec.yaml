@@ -1,5 +1,5 @@
 name: flutter_application_1
-description: "اپ عاشقونه - تماشای همزمان، چت، تقویم و پریود"
+description: "اپ عاشقونه - چت، تقویم، پریود، لحظه‌ها"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -11,44 +11,50 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared_preferences: ^2.3.3
+  # ================= CORE =================
+  provider: ^6.1.5
+  shared_preferences: ^2.5.5
 
-  provider: ^6.1.1
-
+  # ================= LOCAL STORAGE =================
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  http: ^1.2.0
-  web_socket_channel: ^3.0.1
+  # ================= NETWORK =================
+  http: ^1.6.0
+  web_socket_channel: ^3.0.3
+  connectivity_plus: ^7.1.1
 
-  video_player: ^2.10.0
-  image_picker: ^1.1.2
-  file_picker: ^8.1.4
+  # ================= MEDIA =================
+  video_player: ^2.11.1
+  image_picker: ^1.2.2
+  file_picker: ^8.3.7
 
-  shamsi_date: ^1.0.4
-  persian_datetime_picker: ^3.2.0
-
-  geolocator: ^13.0.1
-
-  lottie: ^3.3.2
-  shimmer: ^3.0.0
-
-  camera: ^0.11.1
-
-  pinput: ^3.0.1
-
-  device_info_plus: ^11.1.0
-  package_info_plus: ^8.1.0
-
-  share_plus: ^10.1.2
-
-  flutter_localizations:
-    sdk: flutter
-
-  connectivity_plus: ^7.0.0
-  animated_emoji: ^3.2.1
+  # image compress (keep stable version)
   flutter_image_compress: ^2.4.0
   cached_network_image: ^3.4.1
+
+  # ================= CALENDAR =================
+  shamsi_date: ^1.1.1
+  persian_datetime_picker: ^3.2.0
+
+  # ================= LOCATION =================
+  geolocator: ^13.0.4
+
+  # ================= UI =================
+  lottie: ^3.3.3
+  shimmer: ^3.0.0
+  pinput: ^3.0.1
+
+  # ================= DEVICE INFO =================
+  device_info_plus: ^11.5.0
+  package_info_plus: ^8.3.1
+
+  # ================= SHARE =================
+  share_plus: ^10.1.4
+
+  # ================= LOCALIZATION =================
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
