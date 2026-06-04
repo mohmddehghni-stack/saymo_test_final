@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:lottie/lottie.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class UserAvatar extends StatelessWidget {
   final String? imageUrl;
@@ -28,6 +28,56 @@ class UserAvatar extends StatelessWidget {
       ? 'assets/lottie/female_avatar.json'
       : 'assets/lottie/male_avatar.json';
 
+  // 🔥 تشخیص نوع عکس
+  Widget _buildImage() {
+    if (imageUrl == null) {
+      return _buildLottie();
+    }
+
+    // اگه Base64 باشه
+    if (imageUrl!.startsWith('data:image')) {
+      try {
+        final base64Data = imageUrl!.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildLottie(),
+        );
+      } catch (e) {
+        return _buildLottie();
+      }
+    }
+
+    // اگه URL باشه (https://...)
+    if (imageUrl!.startsWith('http')) {
+      // اینجا میتونی از CachedNetworkImage استفاده کنی
+      // ولی چون عکس‌ها Base64 هستن، به این حالت نمیرسیم
+      return Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildLottie(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _buildLottie();
+        },
+      );
+    }
+
+    // حالت پیش‌فرض
+    return _buildLottie();
+  }
+
+  Widget _buildLottie() {
+    return Lottie.asset(
+      _lottieAsset,
+      width: size * 0.7,
+      height: size * 0.7,
+      fit: BoxFit.contain,
+      repeat: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -46,30 +96,7 @@ class UserAvatar extends StatelessWidget {
               ),
             ],
           ),
-          child: ClipOval(
-            child: imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Lottie.asset(
-                      _lottieAsset,
-                      width: size * 0.7,
-                      height: size * 0.7,
-                    ),
-                    errorWidget: (context, url, error) => Lottie.asset(
-                      _lottieAsset,
-                      width: size * 0.7,
-                      height: size * 0.7,
-                    ),
-                  )
-                : Lottie.asset(
-                    _lottieAsset,
-                    width: size * 0.7,
-                    height: size * 0.7,
-                    fit: BoxFit.contain,
-                    repeat: true,
-                  ),
-          ),
+          child: ClipOval(child: _buildImage()),
         ),
         if (showCameraButton)
           Positioned(
