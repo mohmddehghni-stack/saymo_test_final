@@ -138,8 +138,12 @@ class AppProvider extends ChangeNotifier {
     _displayName = prefs.getString('displayName');
     _partnerDisplayName = prefs.getString('partnerDisplayName');
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-
     _partnerGender = prefs.getString('partnerGender');
+
+    // 🔥 این دو خط اضافه بشه:
+    _avatarUrl = prefs.getString('avatarUrl');
+    _partnerAvatarUrl = prefs.getString('partnerAvatarUrl');
+
     notifyListeners();
   }
 
