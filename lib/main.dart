@@ -43,6 +43,10 @@ void main() async {
   final appProvider = AppProvider();
   await appProvider.loadFromStorage();
 
+  print('🔍 AFTER LOAD - userId: ${appProvider.userId}');
+  print('🔍 AFTER LOAD - partnerId: ${appProvider.partnerId}');
+  print('🔍 AFTER LOAD - isConnected: ${appProvider.isConnected}');
+
   final prefs = await SharedPreferences.getInstance();
 
   final momentProvider = MomentProvider();

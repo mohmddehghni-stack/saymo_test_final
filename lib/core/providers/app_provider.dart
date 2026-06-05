@@ -132,16 +132,16 @@ class AppProvider extends ChangeNotifier {
 
   void resetConnection() async {
     _isConnected = false;
-    _partnerUsername = null;
-    _partnerId = null;
+    //_partnerUsername = null;
+    //_partnerId = null;
     _partnerDisplayName = null;
     _partnerGender = null;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isConnected', false);
-    await prefs.remove('partnerUsername');
-    await prefs.remove('partnerId');
+    //await prefs.remove('partnerUsername');
+    //await prefs.remove('partnerId');
     await prefs.remove('partnerDisplayName');
     await prefs.remove('partnerGender');
   }
@@ -158,10 +158,13 @@ class AppProvider extends ChangeNotifier {
     _partnerDisplayName = prefs.getString('partnerDisplayName');
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _partnerGender = prefs.getString('partnerGender');
-
-    // 🔥 این دو خط اضافه بشه:
     _avatarUrl = prefs.getString('avatarUrl');
     _partnerAvatarUrl = prefs.getString('partnerAvatarUrl');
+
+    // 🔥 اگه partnerId داریم، isConnected رو true کن
+    if (_partnerId != null && _partnerId!.isNotEmpty) {
+      _isConnected = true;
+    }
 
     notifyListeners();
   }

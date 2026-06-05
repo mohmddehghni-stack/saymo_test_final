@@ -23,6 +23,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:flutter_application_1/core/services/event_bus.dart';
 import 'package:flutter_application_1/shared/services/socket_service.dart';
+import 'package:flutter_application_1/features/calendar/sheets/add_moment_sheet.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -287,7 +288,8 @@ class _CalendarPageState extends State<CalendarPage>
             : null;
 
     return Scaffold(
-      backgroundColor: softBg,
+      extendBody: true, // 👈 این خط رو اضافه کن
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           FadeTransition(
@@ -348,14 +350,22 @@ class _CalendarPageState extends State<CalendarPage>
                 ),
               ),
             ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: buildBottomNav(context, activePage: 'calendar'),
+          ),
         ],
       ),
-      floatingActionButton: _currentTab == 0 ? _buildSpeedFanFAB() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _currentTab != 2
-          ? buildBottomNav(context,
-              activePage: 'calendar', fabInCenter: _currentTab != 0)
+      floatingActionButton: _currentTab == 0
+          ? Padding(
+              padding:
+                  const EdgeInsets.only(bottom: 80), // 🔥 ۸۰px فاصله از پایین
+              child: _buildSpeedFanFAB(),
+            )
           : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 

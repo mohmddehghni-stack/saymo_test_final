@@ -45,21 +45,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _startSmartTimer(); // ← به جای تایمر ساده
   }
 
-  Widget _buildHomeBody(AppProvider appProvider) {
-    final body = BodyCards(
-      onMissYouPressed: () => appProvider.incrementFeeling(),
-    );
-
-    if (!appProvider.isConnected) {
-      return LockedWidget(
-        child: body,
-        message: 'پارتنرت رو دعوت کن 💕',
-      );
-    }
-
-    return body;
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -213,6 +198,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final appProvider = context.watch<AppProvider>();
 
     return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.transparent,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -232,24 +219,61 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   const SizedBox(height: 12),
                   const CalendarStrip(),
                   const SizedBox(height: 12),
-                  if (!appProvider.isConnected)
+                  if (!appProvider.isConnected && appProvider.partnerId == null)
                     ConnectBanner(onConnected: _onConnected),
                   const SizedBox(height: 8),
                   Expanded(
-                    child: _buildHomeBody(appProvider),
+                    child: Consumer<AppProvider>(
+                      builder: (context, appProvider, _) {
+                        // 🔥 اگه userId هنوز لود نشده، Loading نشون بده
+                        if (appProvider.userId == null ||
+                            appProvider.userId!.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary),
+                          );
+                        }
+
+                        // 🔥 اگه userId هست ولی partnerId نیست، قفل کن
+                        final hasPartner = appProvider.partnerId != null &&
+                            appProvider.partnerId!.isNotEmpty;
+
+                        if (!hasPartner) {
+                          return LockedWidget(
+                            child: BodyCards(
+                              onMissYouPressed: () =>
+                                  appProvider.incrementFeeling(),
+                            ),
+                            message: 'پارتنرت رو دعوت کن 💕',
+                          );
+                        }
+
+                        return BodyCards(
+                          onMissYouPressed: () =>
+                              appProvider.incrementFeeling(),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
             if (_isMenuOpen)
               SideMenu(onClose: () => setState(() => _isMenuOpen = false)),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: buildBottomNav(context, activePage: 'home'),
+            ),
           ],
         ),
       ),
-      // 👈 دکمه شناور سینما (همیشه نمایش داده میشه)
-      floatingActionButton: const _CinemaFAB(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: buildBottomNav(context, activePage: 'home'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: const _CinemaFAB(),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
@@ -260,8 +284,8 @@ class _CinemaFAB extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 68,
-      height: 68,
+      width: 60,
+      height: 60,
       child: FloatingActionButton(
         backgroundColor: AppColors.primary,
         elevation: 8,

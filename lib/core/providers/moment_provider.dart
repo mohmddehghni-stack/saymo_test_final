@@ -165,7 +165,6 @@ class MomentProvider extends ChangeNotifier {
   void _handleSocketMessage(Map<String, dynamic> data) {
     if (data['action'] == 'moment_updated' ||
         data['action'] == 'moment_deleted') {
-      print('🔄 Moment updated - reloading...');
       loadMoments();
     }
   }
@@ -194,11 +193,7 @@ class MomentProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final list = data['moments'] as List;
-        if (list.isNotEmpty) {
-          print('🔍 First moment from server:');
-          print('🔍 start_date: ${list[0]['start_date']}');
-          print('🔍 full object keys: ${list[0].keys}');
-        }
+        if (list.isNotEmpty) {}
         _moments = list.map((j) => Moment.fromJson(j)).toList();
         _errorMessage = null;
       } else {
