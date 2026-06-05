@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -31,6 +32,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  Timer? _partnerCheckTimer;
+  bool _isAppInForeground = true;
   bool _isMenuOpen = false;
 
   @override
@@ -38,7 +41,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _connectToSocket();
-    _tryPullPartner(); // چک اولیه هنگام ورود به Home
+    _tryPullPartner();
+    _startSmartTimer(); // ← به جای تایمر ساده
   }
 
   Widget _buildHomeBody(AppProvider appProvider) {
@@ -59,7 +63,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _isAppInForeground = true;
+      _tryPullPartner(); // چک فوری
+      _startSmartTimer(); // دوباره استارت کن
+    } else if (state == AppLifecycleState.paused) {
+      _isAppInForeground = false;
+      _stopSmartTimer(); // رفتیم تو بک‌گراند، تایمر بخواب
+    }
+  }
+
+  void _startSmartTimer() {
+    _stopSmartTimer();
+    _partnerCheckTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!_isAppInForeground) {
+        _stopSmartTimer();
+        return;
+      }
+      final appProvider = context.read<AppProvider>();
+      if (appProvider.partnerId != null) {
+        _stopSmartTimer(); // پارتنر اومد، تایمر خودکشی کن
+        return;
+      }
       _tryPullPartner();
+    });
+  }
+
+  void _stopSmartTimer() {
+    _partnerCheckTimer?.cancel();
+    _partnerCheckTimer = null;
+  }
+
+  void _forceStopTimerIfConnected() {
+    final appProvider = context.read<AppProvider>();
+    if (appProvider.partnerId != null) {
+      _stopSmartTimer();
     }
   }
 
@@ -76,6 +113,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             displayName: partner['display_name'],
             partnerGender: partner['gender'],
           );
+          _forceStopTimerIfConnected();
         }
       } catch (_) {}
     }
@@ -165,6 +203,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _stopSmartTimer();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
