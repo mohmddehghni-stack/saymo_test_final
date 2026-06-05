@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/features/auth/pages/welcome_screen.dart';
 
 void showLogoutDialog(BuildContext context) {
   showDialog(
@@ -65,11 +66,12 @@ void showLogoutDialog(BuildContext context) {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(ctx);
-                      // 🔥 خروج واقعی
+                      Navigator.pop(ctx); // بستن دیالوگ
                       context.read<AppProvider>().logout();
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/welcome', (route) => false);
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const WelcomePage()),
+                        (route) => false,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,

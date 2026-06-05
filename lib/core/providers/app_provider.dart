@@ -66,13 +66,28 @@ class AppProvider extends ChangeNotifier {
     _isConnected = false;
     _gender = null;
     _username = null;
-    _displayName = null; // 🔥 اضافه کن
-    _partnerDisplayName = null; // 🔥 اضافه کن
+    _displayName = null;
+    _partnerDisplayName = null;
     _avatarUrl = null;
     _partnerAvatarUrl = null;
+    _partnerGender = null; // 🔥 اینم اضافه کن
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
+    // 🧹 پاک کردن تمام Hive Boxes
+    final boxesToClear = [
+      'user_data',
+      'period_data',
+      'calendar_notes',
+      'calendar_data',
+      'sync_queue',
+      'couple_cache'
+    ];
+    for (final boxName in boxesToClear) {
+      final box = Hive.box(boxName);
+      await box.clear();
+    }
 
     notifyListeners();
   }
@@ -254,6 +269,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   // 🗑️ حذف کامل اکانت
+  // 🗑️ حذف کامل اکانت
   Future<void> deleteAccount() async {
     try {
       final response = await http.delete(
@@ -282,9 +298,19 @@ class AppProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
 
-        // پاک کردن Hive
-        final userBox = Hive.box('user_data');
-        await userBox.clear();
+        // 🧹 پاک کردن تمام Hive Boxes
+        final boxesToClear = [
+          'user_data',
+          'period_data',
+          'calendar_notes',
+          'calendar_data',
+          'sync_queue',
+          'couple_cache'
+        ];
+        for (final boxName in boxesToClear) {
+          final box = Hive.box(boxName);
+          await box.clear();
+        }
 
         notifyListeners();
       } else {

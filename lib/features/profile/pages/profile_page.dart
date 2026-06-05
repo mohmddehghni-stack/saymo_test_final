@@ -16,6 +16,7 @@ import 'package:flutter_application_1/shared/widgets/avatar_picker_dialog.dart';
 import 'package:flutter_application_1/shared/services/image_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/shared/services/api_service.dart';
+import 'package:flutter_application_1/features/auth/pages/welcome_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -143,7 +144,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       try {
                         await context.read<AppProvider>().deleteAccount();
                         if (mounted) {
-                          Navigator.pushReplacementNamed(context, '/');
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (_) => const WelcomePage()),
+                            (route) => false,
+                          );
                         }
                       } catch (e) {
                         if (mounted) {

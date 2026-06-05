@@ -21,6 +21,7 @@ import '../../../core/providers/app_provider.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/widgets/locked_widget.dart';
 import '../widgets/body_cards.dart';
+import 'package:flutter_application_1/shared/services/api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,13 +30,15 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isMenuOpen = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _connectToSocket();
+    _tryPullPartner(); // چک اولیه هنگام ورود به Home
   }
 
   Widget _buildHomeBody(AppProvider appProvider) {
@@ -51,6 +54,31 @@ class _HomePageState extends State<HomePage> {
     }
 
     return body;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _tryPullPartner();
+    }
+  }
+
+  Future<void> _tryPullPartner() async {
+    final appProvider = context.read<AppProvider>();
+    if (appProvider.userId != null && appProvider.partnerId == null) {
+      try {
+        final response = await ApiService.getProfile();
+        final partner = response['partner'];
+        if (partner != null) {
+          appProvider.connectPartner(
+            partner['username'] ?? '',
+            partnerId: partner['id']?.toString(),
+            displayName: partner['display_name'],
+            partnerGender: partner['gender'],
+          );
+        }
+      } catch (_) {}
+    }
   }
 
   void _connectToSocket() {
@@ -133,6 +161,12 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(builder: (_) => const CinemaRoomPage()),
     );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
