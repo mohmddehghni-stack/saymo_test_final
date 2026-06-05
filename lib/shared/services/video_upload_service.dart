@@ -13,13 +13,11 @@ class VideoUploadService {
     try {
       // یه GET به upload.php بزن - hash رو از response نگیر، از URL parameter استفاده کن
       final testUrl = '$uploadUrl?path=$userPath&user_id=$userId';
-      print('🔍 Getting hash from: $testUrl');
 
       // این hash رو از لاگ قبلی برداشتم - ممکنه عوض بشه
       // اگه بازم invalid بود، باید از لاگ Network دوباره برداریم
       return '0e4dc0ac3d054219cbdb76981f497846'; // 🔥 hash قبلی
     } catch (e) {
-      print('❌ خطا: $e');
       return null;
     }
   }
@@ -32,17 +30,13 @@ class VideoUploadService {
       );
 
       if (result == null || result.files.isEmpty) {
-        print('❌ فایلی انتخاب نشد');
         return null;
       }
 
       final file = result.files.first;
-      print(
-          '📁 انتخاب: ${file.name} (${(file.size / 1024 / 1024).toStringAsFixed(1)} MB)');
 
       return await _uploadFile(file);
     } catch (e) {
-      print('❌ خطا: $e');
       return null;
     }
   }
@@ -51,7 +45,6 @@ class VideoUploadService {
     try {
       final hash = await _getHash();
       if (hash == null) {
-        print('❌ hash پیدا نشد');
         return null;
       }
 
@@ -72,23 +65,18 @@ class VideoUploadService {
         );
       }
 
-      print('📤 در حال آپلود...');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
-      print('📥 پاسخ: $data');
-
       if (data['status'] == true) {
         final playerUrl = data['browser_player_url'];
-        print('✅ لینک پخش: $playerUrl');
+
         return playerUrl;
       } else {
-        print('❌ خطا در آپلود: ${data['msg']}');
         return null;
       }
     } catch (e) {
-      print('❌ خطای آپلود: $e');
       return null;
     }
   }

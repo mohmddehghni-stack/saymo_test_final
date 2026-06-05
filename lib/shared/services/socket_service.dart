@@ -23,38 +23,32 @@ class SocketService {
   static void addHandler(MessageHandler handler) {
     if (!_handlers.contains(handler)) {
       _handlers.add(handler);
-      print('🔌 هندلر اضافه شد (${_handlers.length} عدد)');
     }
   }
 
   // 👈 حذف کردن هندلر
   static void removeHandler(MessageHandler handler) {
     _handlers.remove(handler);
-    print('🔌 هندلر حذف شد (${_handlers.length} عدد)');
   }
 
   // 👈 پاک کردن همه هندلرها
   static void clearHandlers() {
     _handlers.clear();
     onMessage = null;
-    print('🔌 همه هندلرها پاک شدن');
   }
 
   static void connect({required String userId, String roomId = 'default'}) {
     if (_currentRoomId != null && _currentRoomId != roomId) {
-      print('🔄 تغییر اتاق از $_currentRoomId به $roomId');
       _forceDisconnect();
     }
 
     if (_channel != null &&
         _currentUserId == userId &&
         _currentRoomId == roomId) {
-      print('🟡 قبلاً به همین اتاق وصله');
       return;
     }
 
     if (_isConnecting) {
-      print('⏳ connection قبلی هنوز در حال اتصاله');
       return;
     }
 
@@ -63,8 +57,6 @@ class SocketService {
     _currentUserId = userId;
     _currentRoomId = roomId;
     _isConnecting = true;
-
-    print('🔵 در حال اتصال به WebSocket...');
 
     try {
       _channel = WebSocketChannel.connect(
@@ -75,7 +67,6 @@ class SocketService {
         (data) {
           try {
             final message = jsonDecode(data);
-            print('📩 پیام: ${message['action']}');
 
             // 👈 فراخوانی همه هندلرها
             for (final handler in _handlers) {
@@ -89,19 +80,15 @@ class SocketService {
           }
         },
         onError: (error) {
-          print('🔴 WebSocket error: $error');
           _forceDisconnect();
         },
         onDone: () {
-          print('🔴 WebSocket closed');
           _forceDisconnect();
         },
       );
 
       _isConnecting = false;
-      print('✅ اتصال موفق');
     } catch (e) {
-      print('❌ خطا: $e');
       _isConnecting = false;
       _forceDisconnect();
     }
@@ -118,7 +105,6 @@ class SocketService {
   // 👈 آپدیت هندلر (برای backward compatibility)
   static void updateMessageHandler(MessageHandler? handler) {
     onMessage = handler;
-    print('🔄 هندلر اصلی آپدیت شد');
   }
 
   static void sendInvitation({
@@ -128,7 +114,6 @@ class SocketService {
     required String videoUrl,
   }) {
     if (_channel == null) {
-      print('❌ وب‌سوکت وصل نیست');
       return;
     }
 
@@ -144,7 +129,6 @@ class SocketService {
   // 👈 send با data اضافی
   static void send(String action, {Map<String, dynamic>? data}) {
     if (_channel == null) {
-      print('❌ وب‌سوکت وصل نیست');
       return;
     }
 
@@ -153,16 +137,13 @@ class SocketService {
       if (data != null) ...data,
     };
 
-    print('📤 ارسال: $action');
     _channel!.sink.add(jsonEncode(message));
   }
 
   static void close() {
-    print('🔴 بستن وب‌سوکت...');
     _forceDisconnect();
     _currentUserId = null;
     _currentRoomId = null;
-    print('✅ وب‌سوکت بسته شد');
   }
 
   // 👈 پاکسازی کامل

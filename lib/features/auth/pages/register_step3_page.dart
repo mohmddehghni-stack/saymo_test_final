@@ -488,8 +488,6 @@ class _RegisterStep3PageState extends State<RegisterStep3Page>
                               ? () async {
                                   setState(() => _isLoading = true);
                                   try {
-                                    print(
-                                        '📝 Registering: ${provider.displayName}, ${provider.phone}, ${provider.password}');
                                     final response = await ApiService.register(
                                       provider.displayName,
                                       provider.username,
@@ -498,7 +496,6 @@ class _RegisterStep3PageState extends State<RegisterStep3Page>
                                       provider
                                           .gender, // 👈 'male' رو با provider.gender جایگزین کن
                                     );
-                                    print('📥 Response: $response');
 
                                     if (response['token'] != null) {
                                       ApiService.setToken(response['token']);
@@ -522,7 +519,6 @@ class _RegisterStep3PageState extends State<RegisterStep3Page>
                                           'خطا در ثبت‌نام');
                                     }
                                   } catch (e) {
-                                    print('❌ Catch error: $e');
                                     _showError('خطا در اتصال به سرور');
                                   } finally {
                                     if (mounted)

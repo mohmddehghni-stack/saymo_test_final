@@ -116,20 +116,14 @@ class NotesManagerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('🔍 Loading notes for coupleId: $_coupleId');
-      print('🔍 Token: ${ApiService.token != null ? "yes" : "NO"}');
-
       final response = await http.get(
         Uri.parse('${ApiService.baseUrl}/shared-notes'),
         headers: ApiService.headers,
       );
 
-      print('📥 Shared Notes Status: ${response.statusCode}');
-      print('📥 Shared Notes Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final List<dynamic> notesJson = jsonDecode(response.body)['notes'];
-        print('📋 Notes count: ${notesJson.length}');
+
         _allNotes = notesJson.map((n) => NoteItem.fromJson(n)).toList();
       }
     } catch (e) {

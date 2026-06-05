@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:http/http.dart' as http;
 import 'package:shamsi_date/shamsi_date.dart';
 import '../../shared/services/socket_service.dart';
@@ -19,6 +18,9 @@ class Moment {
   final String emoji;
   final bool isRecurring;
   final bool isPrivate;
+  final String? status;
+  final Jalali? startDate;
+  final bool autoDelete;
 
   Moment({
     this.id,
@@ -30,6 +32,9 @@ class Moment {
     this.emoji = '🎉',
     this.isRecurring = false,
     this.isPrivate = false,
+    this.status,
+    this.startDate,
+    this.autoDelete = false,
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) {
@@ -50,7 +55,17 @@ class Moment {
       category: _parseCategory(json['category']),
       emoji: json['emoji'] ?? '🎉',
       isRecurring: json['is_recurring'] == true,
+      status: json['status'] ?? 'active',
+      startDate:
+          json['start_date'] != null ? _parseDate(json['start_date']) : null,
+      autoDelete: json['auto_delete'] == true,
     );
+  }
+
+  static Jalali _parseDate(String dateStr) {
+    final parts = dateStr.split('-');
+    return Jalali(
+        int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
   }
 
   static MomentCategory _parseCategory(String? cat) {
@@ -95,9 +110,34 @@ class MomentProvider extends ChangeNotifier {
     return upcoming.first;
   }
 
+  List<Moment> get passedMoments =>
+      _moments.where((m) => m.status == 'passed').toList();
+  List<Moment> get activeMoments =>
+      _moments.where((m) => m.status == 'active').toList();
+
+  Future<List<Moment>> getHistory({String period = 'all'}) async {
+    try {
+      final uri =
+          Uri.parse('${ApiService.baseUrl}/calendar/history?period=$period');
+      final response = await http.get(uri, headers: {
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['history'] as List)
+            .map((j) => Moment.fromJson(j))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading history: $e');
+    }
+    return [];
+  }
+
   List<Moment> get upcoming {
     final now = Jalali.now();
     final list = _moments.where((m) {
+      if (m.status == 'passed') return false;
       if (m.date.year > now.year) return true;
       if (m.date.year == now.year && m.date.month > now.month) return true;
       if (m.date.year == now.year &&
@@ -154,6 +194,11 @@ class MomentProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final list = data['moments'] as List;
+        if (list.isNotEmpty) {
+          print('🔍 First moment from server:');
+          print('🔍 start_date: ${list[0]['start_date']}');
+          print('🔍 full object keys: ${list[0].keys}');
+        }
         _moments = list.map((j) => Moment.fromJson(j)).toList();
         _errorMessage = null;
       } else {
@@ -171,22 +216,26 @@ class MomentProvider extends ChangeNotifier {
   Future<void> addMoment({
     required String title,
     required Jalali date,
+    Jalali? startDate,
     MomentCategory category = MomentCategory.appointment,
     String emoji = '🎉',
     bool isRecurring = false,
     bool isPrivate = false,
   }) async {
     if (_userId == null || _partnerId == null) return;
-    print('🔍 addMoment - userId: $_userId, partnerId: $_partnerId');
 
     final momentDateStr =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final startDateStr = startDate != null
+        ? '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}'
+        : null;
 
     final body = jsonEncode({
       'userId': _userId,
       'partnerId': _partnerId,
       'title': title,
       'momentDate': momentDateStr,
+      'startDate': startDateStr, // 🔥 اضافه کن
       'category': _categoryToString(category),
       'emoji': emoji,
       'isRecurring': isRecurring,

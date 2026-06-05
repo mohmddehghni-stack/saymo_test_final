@@ -40,15 +40,10 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await ApiService.getProfile();
       if (response['user'] != null) {
         final user = response['user'];
-        print('🔍 user data from server: $user');
 
         // 🔥 displayName رو تو AppProvider ذخیره کن
         final appProvider = context.read<AppProvider>();
-        print('🔍 SELF avatar_url: ${user['avatar_url']}');
-        print('🔍 PARTNER avatar_url: ${response['partner']?['avatar_url']}');
-        print('🔍 appProvider.avatarUrl: ${appProvider.avatarUrl}');
-        print(
-            '🔍 appProvider.partnerAvatarUrl: ${appProvider.partnerAvatarUrl}');
+
         if (user['display_name'] != null) {
           appProvider.setDisplayName(user['display_name']);
         }
@@ -220,10 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             'Authorization': 'Bearer ${ApiService.token}',
                           },
                         );
-                        print('🗑️ Delete notified to partner');
-                      } catch (e) {
-                        print('❌ Delete notify error: $e');
-                      }
+                      } catch (e) {}
                     } else if (result != null && mounted) {
                       // 🔥 آپلود روی سرور
                       final avatarUrl = await ImageService.uploadAvatar(result);

@@ -27,13 +27,10 @@ class CalendarContent extends StatelessWidget {
     context.watch<PeriodProvider>();
 
     final mp = context.read<MomentProvider>();
-    print('🔍 Moments count: ${mp.moments.length}');
-    for (final m in mp.moments) {
-      print('  - ${m.title} | ${m.date.year}/${m.date.month}/${m.date.day}');
-    }
+
+    for (final m in mp.moments) {}
 
     final allEvents = _getAllEvents(context, cp);
-    print('📋 Events count: ${allEvents.length}');
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -115,10 +112,9 @@ class CalendarContent extends StatelessWidget {
   // ─── تقویم ───
 
   Widget _buildCalendar(BuildContext context, CalendarProvider cp) {
-    print('🔍 _buildCalendar - savedNotes count: ${cp.savedNotes.length}');
     final pp = context.read<PeriodProvider>();
     final appProvider = context.read<AppProvider>();
-    print('🔍 Gender: ${appProvider.gender}'); // باید male باشه برای پسر
+
     final isFemale = appProvider.gender == 'female';
 
     // 🔥 بر اساس جنسیت تصمیم بگیر از کدوم داده استفاده کنه

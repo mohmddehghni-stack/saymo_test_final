@@ -56,7 +56,7 @@ class CoupleService {
   }
 
   /// 💕 ارسال "دلم تنگ شده"
-  static Future<bool> sendMissYou() async {
+  static Future<int?> sendMissYou() async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/couple/miss-you'),
@@ -68,13 +68,14 @@ class CoupleService {
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         SocketService.send('miss_you_sent', data: {});
-        return true;
+        return data['todayCount'];
       }
-      return false;
+      return null;
     } catch (e) {
       debugPrint('❌ Miss you error: $e');
-      return false;
+      return null;
     }
   }
 

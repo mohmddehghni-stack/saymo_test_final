@@ -193,13 +193,10 @@ class CalendarProvider extends ChangeNotifier {
   // 🔥 WebSocket Handler - جایگزین Polling
   // =============================================
   void _handleSocketMessage(Map<String, dynamic> data) {
-    print('📩 CalendarProvider got: ${data['action']}');
     if (data['action'] == 'calendar_note_added' ||
         data['action'] == 'calendar_note_update' ||
         data['action'] == 'calendar_note_updated' ||
         data['action'] == 'calendar_note_deleted') {
-      // ← اینو داری؟
-      print('🔄 reloading notes...');
       _loadNotesSilent().then((_) => notifyListeners());
     }
   }

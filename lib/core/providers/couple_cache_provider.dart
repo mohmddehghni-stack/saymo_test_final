@@ -29,7 +29,9 @@ class CoupleCacheProvider extends ChangeNotifier {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _missYouCount = data['count'] ?? 0;
+        _myMissYouCount = data['myTodayCount'] ?? 0;
+        _missYouCount = data['partnerTodayCount'] ?? 0;
+        _cache.put('my_miss_you_count', _myMissYouCount);
         _cache.put('miss_you_count', _missYouCount);
         notifyListeners();
       }
@@ -86,6 +88,10 @@ class CoupleCacheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshMissYouCounts() async {
+    await _loadMissYouFromServer();
+  }
+
   void incrementMyMissYou() {
     _myMissYouCount++;
     _cache.put('my_miss_you_count', _myMissYouCount);
@@ -101,12 +107,10 @@ class CoupleCacheProvider extends ChangeNotifier {
         break;
 
       case 'miss_you_received':
+        _missYouCount = data['count'] ?? (_missYouCount + 1);
         _lastMissYou = DateTime.now().toString();
-        _missYouCount++;
-        final today = DateTime.now().toIso8601String().substring(0, 10);
-        _cache.put('last_miss_you', _lastMissYou);
         _cache.put('miss_you_count', _missYouCount);
-        _cache.put('miss_you_date', today);
+        _cache.put('last_miss_you', _lastMissYou);
         notifyListeners();
         break;
 

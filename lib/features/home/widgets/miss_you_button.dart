@@ -53,8 +53,12 @@ class _MissYouButtonState extends State<MissYouButton>
 
     widget.onPressed();
 
-    // 🔥 ارسال به سرور
-    CoupleService.sendMissYou();
+    // 🔥 ارسال به سرور و رفرش
+    CoupleService.sendMissYou().then((_) {
+      if (mounted) {
+        context.read<CoupleCacheProvider>().refreshMissYouCounts();
+      }
+    });
 
     for (int i = 0; i < 12; i++) {
       _hearts.add(_FloatingHeart(index: i, angle: (i / 12) * 2 * pi));
@@ -66,8 +70,6 @@ class _MissYouButtonState extends State<MissYouButton>
       _hearts.clear();
       if (mounted) setState(() {});
     });
-    final cache = context.read<CoupleCacheProvider>();
-    cache.incrementMyMissYou(); // متد جدید
   }
 
   @override

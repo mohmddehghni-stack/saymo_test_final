@@ -455,40 +455,50 @@ class AddMomentSheet {
                       onPressed: () async {
                         final mp = context.read<MomentProvider>();
 
-                        // 🔥 اگه init نشده، از AppProvider مقدار بگیر
+                        // 🔥 اگه init نشده، مقدار بده
                         if (!mp.isInitialized) {
                           final appProvider = context.read<AppProvider>();
-                          print(
-                              '🔘 AppProvider - userId: ${appProvider.userId}, partnerId: ${appProvider.partnerId}');
-
                           if (appProvider.userId != null &&
                               appProvider.partnerId != null &&
                               appProvider.partnerId!.isNotEmpty) {
                             mp.init(
                                 appProvider.userId!, appProvider.partnerId!);
-                            print('✅ از AppProvider init شد');
                           } else {
-                            print('❌ AppProvider هم partnerId نداره!');
-                            // 🔥 یه راه دیگه: از SharedPreferences مستقیم بخون
                             final prefs = await SharedPreferences.getInstance();
                             final partnerId = prefs.getString('partnerId');
-                            print('🔘 SharedPreferences partnerId: $partnerId');
-
                             if (partnerId != null && partnerId.isNotEmpty) {
                               mp.init(appProvider.userId ?? '46', partnerId);
-                              print('✅ از SharedPreferences init شد');
                             } else {
-                              print('❌ هیچ جا partnerId نیست!');
                               return;
                             }
                           }
                         }
 
-                        // ثبت لحظه
-                        if (titleController.text.trim().isNotEmpty) {
-                          mp.addMoment(
+                        // 🔥 برای مناسبت: ثبت همه انتخاب‌ها
+                        if (selectedCategory == MomentCategory.milestone &&
+                            _selectedTitles.isNotEmpty) {
+                          for (final title in _selectedTitles) {
+                            final preset = PresetMoments.milestones
+                                .firstWhere((p) => p['title'] == title);
+                            await mp.addMoment(
+                              title: title,
+                              date: selectedDate,
+                              startDate: Jalali.now(), // 🔥 اضافه شد
+                              category: selectedCategory,
+                              emoji: preset['emoji'] ?? '💎',
+                              isRecurring: isRecurring,
+                              isPrivate: isPrivate,
+                            );
+                          }
+                          Navigator.pop(ctx);
+                          HapticFeedback.mediumImpact();
+                        }
+                        // 🔥 برای قرار/اولین: ثبت یک لحظه
+                        else if (titleController.text.trim().isNotEmpty) {
+                          await mp.addMoment(
                             title: titleController.text.trim(),
                             date: selectedDate,
+                            startDate: Jalali.now(),
                             category: selectedCategory,
                             emoji: selectedEmoji,
                             isRecurring: isRecurring,

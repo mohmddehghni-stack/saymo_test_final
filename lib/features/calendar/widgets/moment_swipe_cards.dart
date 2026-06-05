@@ -7,7 +7,6 @@ import 'package:flutter_application_1/core/providers/moment_provider.dart';
 import 'package:flutter_application_1/core/providers/calendar_provider.dart';
 import 'package:flutter_application_1/features/calendar/data/preset_moments.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 
 class MomentSwipeCards extends StatefulWidget {
   const MomentSwipeCards({super.key});
@@ -28,10 +27,10 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
   late Animation<double> _sinkAnimation;
 
   late AnimationController _progressController;
-  late Animation<double> _progressAnimation;
   Moment? _lastMoment;
 
   int _currentGlobalIndex = 0;
+  Timer? _progressTimer;
 
   @override
   void initState() {
@@ -39,10 +38,7 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
 
     _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
-    );
-    _progressAnimation = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _progressController, curve: Curves.linear),
+      duration: const Duration(milliseconds: 500), // انیمیشن نرم
     );
 
     _sinkController = AnimationController(
@@ -64,41 +60,85 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
         });
       }
     });
+
+    // 🔥 شروع تایمر Real-time
+    _startAutoProgress();
   }
 
   @override
   void dispose() {
     _progressController.dispose();
     _sinkController.dispose();
+    _progressTimer?.cancel();
     super.dispose();
   }
 
+  // 🔥 تایمر Real-time: هر ۳۰ ثانیه Progress رو آپدیت کن
+  void _startAutoProgress() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      final mp = context.read<MomentProvider>();
+      final cp = context.read<CalendarProvider>();
+      final allMoments = mp.upcoming
+          .where((m) => !m.isPrivate || m.userId == cp.userId)
+          .toList();
+      if (allMoments.isNotEmpty) {
+        final idx = _currentGlobalIndex % allMoments.length;
+        _updateProgress(allMoments[idx]);
+      }
+    });
+  }
+
+  // 🔥 محاسبه دقیق با ساعت و دقیقه
+  double _calculateRealProgress(Moment moment) {
+    final now = DateTime.now();
+    final startDateTime = moment.startDate?.toDateTime() ?? now;
+    final targetDateTime = moment.date.toDateTime();
+
+    // ساعت ۰۰:۰۰ روز target
+    final targetDayStart = DateTime(
+      targetDateTime.year,
+      targetDateTime.month,
+      targetDateTime.day,
+    );
+
+    final totalDuration = targetDayStart.difference(startDateTime);
+    final passedDuration = now.difference(startDateTime);
+
+    if (totalDuration.inSeconds <= 0) return 1.0;
+    return (passedDuration.inSeconds / totalDuration.inSeconds).clamp(0.0, 1.0);
+  }
+
   void _updateProgress(Moment moment) {
-    if (_lastMoment == moment) return;
+    if (_lastMoment == moment && _progressController.isAnimating) return;
     _lastMoment = moment;
 
-    // 👈 محاسبه درصد پیشرفت به صورت شمسی
-    final now = Jalali.now();
-    final target = moment.date;
+    double targetProgress;
 
-    int totalDays;
-    if (moment.isRecurring) {
-      totalDays = 365;
+    if (moment.startDate != null) {
+      // 🔥 محاسبه دقیق با ساعت/دقیقه
+      targetProgress = _calculateRealProgress(moment);
     } else {
-      totalDays = _daysBetween(now, target).abs();
-      if (totalDays == 0) totalDays = 1;
+      // 🔥 فرمول خطی برای رویدادهای قدیمی
+      final now = Jalali.now();
+      final target = moment.date;
+      final daysRemaining = _daysBetween(now, target);
+      if (daysRemaining <= 0) {
+        targetProgress = 1.0;
+      } else {
+        final maxDays = 30.0;
+        final clampedDays = daysRemaining.clamp(0, maxDays.toInt());
+        targetProgress = 1.0 - (clampedDays / maxDays);
+      }
     }
 
-    int passedDays = 0;
-    if (moment.isRecurring) {
-      final lastYear = Jalali(now.year - 1, target.month, target.day);
-      passedDays = _daysBetween(lastYear, now).abs();
-      if (passedDays > 365) passedDays = 365;
-    }
-
-    _progressController.reset();
-    _progressController.duration = const Duration(seconds: 1);
-    _progressController.value = (passedDays / totalDays).clamp(0.0, 1.0);
+    // 🔥 انیمیشن نرم به سمت target
+    _progressController.animateTo(
+      targetProgress.clamp(0.0, 1.0),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -260,7 +300,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
   }
 
   Widget _buildCardContent(Moment moment, bool isTop, int totalMoments) {
-    // 👈 استفاده از countdownText به جای محاسبه میلادی
     final momentProvider = context.read<MomentProvider>();
     final countdownText = momentProvider.countdownText(moment);
 
@@ -310,7 +349,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
                                 ? const Color(0xFF1A1A2E)
                                 : const Color(0xFF8E8E98))),
                     const SizedBox(height: 2),
-                    // 👈 نمایش متن شمارش معکوس درست
                     Text(
                       countdownText,
                       style: const TextStyle(
@@ -326,13 +364,14 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
           ),
           if (isTop) ...[
             const SizedBox(height: 12),
+            // 🔥 Progress Bar با انیمیشن
             AnimatedBuilder(
-              animation: _progressAnimation,
+              animation: _progressController,
               builder: (context, child) {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
-                    value: _progressAnimation.value,
+                    value: _progressController.value,
                     backgroundColor: Colors.grey.shade100,
                     valueColor: AlwaysStoppedAnimation<Color>(
                         _getCategoryColors(moment.category).last),

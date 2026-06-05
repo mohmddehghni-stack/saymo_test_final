@@ -266,10 +266,7 @@ class PeriodProvider extends ChangeNotifier {
     SocketService.addHandler(_handleSocketMessage); // 🔥
   }
   void _handleSocketMessage(Map<String, dynamic> data) {
-    print('📩 RECEIVED socket message: $data');
-
     if (data['action'] == 'period_updated') {
-      print('🔄 Period updated by partner - reloading...');
       loadPartnerData(); // فقط داده پارتنر رو رفرش کن
     }
   }
@@ -292,16 +289,12 @@ class PeriodProvider extends ChangeNotifier {
     _token = ApiService.token;
 
     if (_token == null || _token!.isEmpty) {
-      print('❌ No token for partner data');
       _partnerDataLoaded = true; // 🔥 اینو true کن که دائماً لودینگ نمونه
       notifyListeners();
       return;
     }
 
     try {
-      print('👦 Loading partner period data...');
-      print('🔑 Token: ${_token!.substring(0, 20)}...');
-
       final response = await http.get(
         Uri.parse('https://couple-api.liara.run/api/period/partner-setup'),
         headers: {
@@ -310,12 +303,8 @@ class PeriodProvider extends ChangeNotifier {
         },
       );
 
-      print('📥 Response status: ${response.statusCode}');
-      print('📥 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('📊 Partner data response: $data');
 
         _hasPartner = data['hasPartner'] ?? false;
 
@@ -329,21 +318,15 @@ class PeriodProvider extends ChangeNotifier {
             _partnerLastPeriodStart = Jalali(
                 int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
           }
-
-          print(
-              '✅ Partner data loaded: day=$partnerCurrentDay, cycle=$_partnerCycleLength');
         } else {
           _isPartnerSetupDone = false;
-          print('⚠️ Partner has not set up period yet');
         }
 
         _partnerDataLoaded = true;
       } else {
-        print('❌ Server error: ${response.statusCode}');
         _partnerDataLoaded = true; // 🔥 بازم true کن که لودینگ تموم بشه
       }
     } catch (e) {
-      print('❌ Error loading partner data: $e');
       _partnerDataLoaded = true; // 🔥 بازم true کن
     }
     notifyListeners();
@@ -351,7 +334,6 @@ class PeriodProvider extends ChangeNotifier {
 
   // 🔥 مقداردهی اولیه با userId (توکن از ApiService)
   void init(String userId) {
-    print('🔍 PeriodProvider init for userId: $userId');
     _userId = userId;
     _token = ApiService.token;
     loadFromServer();
@@ -388,8 +370,6 @@ class PeriodProvider extends ChangeNotifier {
                 int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
           }
         }
-        print(
-            '✅ Period loaded: isSetupDone=$_isSetupDone, start=$_lastPeriodStart');
       }
     } catch (e) {
       debugPrint('❌ Error loading period: $e');
@@ -405,15 +385,12 @@ class PeriodProvider extends ChangeNotifier {
     }
 
     if (_userId == null) {
-      print('❌ userId is null');
       return;
     }
     if (_token == null) {
-      print('❌ token is null');
       return;
     }
     if (_lastPeriodStart == null) {
-      print('❌ lastPeriodStart is null - کاربر تاریخ رو انتخاب نکرده!');
       return;
     }
 
@@ -424,7 +401,6 @@ class PeriodProvider extends ChangeNotifier {
         'cycleLength': _cycleLength,
         'periodLength': _periodLength,
       });
-      print('📤 POST body: $body');
 
       final response = await http.post(
         Uri.parse('https://couple-api.liara.run/api/period/setup'),
@@ -435,15 +411,9 @@ class PeriodProvider extends ChangeNotifier {
         body: body,
       );
 
-      print('📥 Response status: ${response.statusCode}');
-      print('📥 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         _isSetupDone = true;
-        print('✅ Period saved to server successfully');
-      } else {
-        print('❌ Server error: ${response.body}');
-      }
+      } else {}
     } catch (e) {
       debugPrint('❌ Error saving period: $e');
     }
@@ -479,10 +449,7 @@ class PeriodProvider extends ChangeNotifier {
 
   // 🔥 ذخیره نهایی (دکمه "ذخیره و شروع")
   void setSetupDone(bool done) async {
-    print('🟢 setSetupDone called: $done');
-
     if (_lastPeriodStart == null) {
-      print('❌ تاریخ انتخاب نشده!');
       return;
     }
 

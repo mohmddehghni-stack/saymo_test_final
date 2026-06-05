@@ -42,8 +42,6 @@ class ImageService {
   // ──────────────────── فشرده‌سازی هوشمند ────────────────────
   static Future<Uint8List?> compressAvatar(Uint8List bytes) async {
     try {
-      print('📸 حجم اولیه: ${(bytes.length / 1024).toStringAsFixed(1)}KB');
-
       // مرحله ۱: فشرده‌سازی با کیفیت ۶۰٪
       var result = await FlutterImageCompress.compressWithList(
         bytes,
@@ -51,7 +49,6 @@ class ImageService {
         minWidth: 512,
         minHeight: 512,
       );
-      print('📸 بعد از ۶۰٪: ${(result.length / 1024).toStringAsFixed(1)}KB');
 
       // مرحله ۲: اگه هنوز > ۲۰۰KB، با کیفیت ۴۰٪
       if (result.length > 200 * 1024) {
@@ -61,17 +58,14 @@ class ImageService {
           minWidth: 512,
           minHeight: 512,
         );
-        print('📸 بعد از ۴۰٪: ${(result.length / 1024).toStringAsFixed(1)}KB');
       }
 
       if (result.length > 200 * 1024) {
-        print('❌ هنوز بالای ۲۰۰ کیلوبایته');
         return null;
       }
 
       return result;
     } catch (e) {
-      print('❌ خطا: $e');
       return null;
     }
   }
@@ -111,10 +105,8 @@ class ImageService {
       final response = await http.Response.fromStream(streamedResponse);
       final result = jsonDecode(response.body);
 
-      print('📤 Upload result: $result');
       return result['avatarUrl'];
     } catch (e) {
-      print('❌ Upload error: $e');
       return null;
     }
   }

@@ -134,12 +134,16 @@ class AppProvider extends ChangeNotifier {
     _isConnected = false;
     _partnerUsername = null;
     _partnerId = null;
+    _partnerDisplayName = null;
+    _partnerGender = null;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isConnected', false);
     await prefs.remove('partnerUsername');
     await prefs.remove('partnerId');
+    await prefs.remove('partnerDisplayName');
+    await prefs.remove('partnerGender');
   }
 
   Future<void> loadFromStorage() async {
@@ -206,9 +210,6 @@ class AppProvider extends ChangeNotifier {
     String? phone,
   }) async {
     try {
-      print(
-          '🔍 updateProfile called with: displayName=$displayName, username=$username, phone=$phone');
-
       final response = await http.put(
         Uri.parse('${ApiService.baseUrl}/auth/update-profile'),
         headers: {
@@ -222,21 +223,12 @@ class AppProvider extends ChangeNotifier {
         }),
       );
 
-      print('🔍 Response status: ${response.statusCode}');
-      print('🔍 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('🔍 Server returned user: ${data['user']}');
-        print('🔍 display_name: ${data['user']['display_name']}');
-        print('🔍 username: ${data['user']['username']}');
 
         // 🔥 هر دو رو جداگانه آپدیت کن
         _username = data['user']['username'];
         _displayName = data['user']['display_name'];
-
-        print(
-            '🔍 After update - _username: $_username, _displayName: $_displayName');
 
         // 🔥 تو SharedPreferences هم ذخیره کن
         final prefs = await SharedPreferences.getInstance();
@@ -245,10 +237,7 @@ class AppProvider extends ChangeNotifier {
           await prefs.setString('displayName', _displayName!);
 
         notifyListeners();
-        print('🔍 notifyListeners called - UI should update now');
-      } else {
-        print('❌ Server error: ${response.body}');
-      }
+      } else {}
     } catch (e) {
       debugPrint('❌ Update profile error: $e');
     }
@@ -324,9 +313,6 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _handleSocketMessage(Map<String, dynamic> data) async {
-    // 🔥 async اضافه کن
-    print('📩 AppProvider got: ${data['action']}');
-
     if (data['action'] == 'partner_connected') {
       final d = data['data'] ?? data;
       final partnerUsername = d['partnerUsername'] ?? d['username'] ?? 'پارتنر';
@@ -334,6 +320,11 @@ class AppProvider extends ChangeNotifier {
       final partnerDisplayName = d['partnerDisplayName'];
       connectPartner(partnerUsername,
           partnerId: partnerId, displayName: partnerDisplayName);
+    }
+
+    // 🔥 اینو اضافه کن:
+    if (data['action'] == 'partner_disconnected') {
+      resetConnection();
     }
 
     if (data['action'] == 'avatar_updated') {
