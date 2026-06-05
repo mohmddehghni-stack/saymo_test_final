@@ -79,6 +79,97 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.delete_forever_rounded,
+                    color: Colors.red.shade400, size: 40),
+              ),
+              const SizedBox(height: 16),
+              const Text('حذف حساب کاربری',
+                  style: TextStyle(
+                      fontFamily: 'Vazir',
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text(
+                  'این عملیات غیرقابل بازگشته!\nهمه اطلاعاتت برای همیشه پاک میشه 💔',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontFamily: 'Vazir',
+                      fontSize: 13,
+                      color: Colors.black54)),
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('انصراف',
+                        style: TextStyle(fontFamily: 'Vazir')),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        await context.read<AppProvider>().deleteAccount();
+                        if (mounted) {
+                          Navigator.pushReplacementNamed(context, '/');
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('خطا در حذف حساب: $e',
+                                  style: const TextStyle(fontFamily: 'Vazir')),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('حذف کن',
+                        style: TextStyle(
+                            fontFamily: 'Vazir', color: Colors.white)),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
@@ -181,6 +272,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 const ThemeSection(),
                 const SizedBox(height: 10),
                 const SupportButton(),
+                const SizedBox(height: 10),
+                // 🗑️ دکمه حذف حساب
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: InkWell(
+                    onTap: () => _showDeleteAccountDialog(context),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.delete_forever_rounded,
+                              color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text('حذف حساب کاربری',
+                              style: TextStyle(
+                                  fontFamily: 'Vazir',
+                                  fontSize: 14,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 40),
               ],
             ),

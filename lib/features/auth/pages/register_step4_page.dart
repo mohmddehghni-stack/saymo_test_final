@@ -8,6 +8,7 @@ import 'package:flutter_application_1/features/auth/widgets/chat_bubble.dart';
 import 'package:flutter_application_1/features/auth/widgets/typing_indicator.dart';
 import 'package:flutter_application_1/features/auth/widgets/confetti_widget.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/providers/app_provider.dart';
 
 class RegisterStep4Page extends StatefulWidget {
   const RegisterStep4Page({super.key});
@@ -112,6 +113,18 @@ class _RegisterStep4PageState extends State<RegisterStep4Page> {
       final response = await ApiService.connectPartner(id);
       if (response['message'] != null) {
         context.read<RegistrationProvider>().setPartnerId(id);
+
+        // 🔥 آپدیت AppProvider
+        final partner = response['partner'];
+        if (partner != null) {
+          context.read<AppProvider>().connectPartner(
+                partner['username'] ?? '',
+                partnerId: partner['id']?.toString(),
+                displayName: partner['displayName'],
+                partnerGender: partner['gender'],
+              );
+        }
+
         _showSuccessDialog();
       } else {
         _showError(response['error'] ?? 'خطا در اتصال');

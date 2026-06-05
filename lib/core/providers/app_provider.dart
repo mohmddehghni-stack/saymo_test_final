@@ -253,6 +253,50 @@ class AppProvider extends ChangeNotifier {
     await prefs.setBool('isDarkMode', _isDarkMode);
   }
 
+  // 🗑️ حذف کامل اکانت
+  Future<void> deleteAccount() async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${ApiService.baseUrl}/auth/delete-account'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiService.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // پاک کردن همه فیلدهای RAM
+        _userId = null;
+        _partnerId = null;
+        _partnerUsername = null;
+        _partnerDisplayName = null;
+        _partnerGender = null;
+        _isConnected = false;
+        _gender = null;
+        _username = null;
+        _displayName = null;
+        _avatarUrl = null;
+        _partnerAvatarUrl = null;
+
+        // پاک کردن SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
+        // پاک کردن Hive
+        final userBox = Hive.box('user_data');
+        await userBox.clear();
+
+        notifyListeners();
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['error'] ?? 'خطا در حذف اکانت');
+      }
+    } catch (e) {
+      debugPrint('❌ Delete account error: $e');
+      rethrow;
+    }
+  }
+
   void _handleSocketMessage(Map<String, dynamic> data) async {
     // 🔥 async اضافه کن
     print('📩 AppProvider got: ${data['action']}');
