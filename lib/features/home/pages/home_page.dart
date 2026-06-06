@@ -5,7 +5,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/side_menu.dart';
 import '../../../shared/services/socket_service.dart';
-import '../../video/pages/video_lobby_page.dart';
 import '../../video/pages/cinema_room_page.dart'; // 👈 جدید
 import '../../video/services/cinema_room_service.dart'; // 👈 جدید
 import '../../video/widgets/invitation_dialog.dart';

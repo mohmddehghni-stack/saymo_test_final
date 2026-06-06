@@ -10,6 +10,7 @@ class UserAvatar extends StatelessWidget {
   final double size;
   final bool showCameraButton;
   final VoidCallback? onCameraTap;
+  final double? borderRadius;
 
   const UserAvatar({
     super.key,
@@ -19,6 +20,7 @@ class UserAvatar extends StatelessWidget {
     this.size = 72,
     this.showCameraButton = false,
     this.onCameraTap,
+    this.borderRadius,
   });
 
   Color get _bgColor =>
@@ -96,7 +98,14 @@ class UserAvatar extends StatelessWidget {
               ),
             ],
           ),
-          child: ClipOval(child: _buildImage()),
+          child: borderRadius != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(borderRadius!),
+                  child: _buildImage(),
+                )
+              : ClipOval(
+                  child: _buildImage(),
+                ),
         ),
         if (showCameraButton)
           Positioned(

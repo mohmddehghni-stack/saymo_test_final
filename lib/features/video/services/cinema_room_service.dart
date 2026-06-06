@@ -69,6 +69,7 @@ class CinemaRoomService extends ChangeNotifier {
     return 'couple_${ids[0]}_${ids[1]}';
   }
 
+  // 🔥 اتصال به روم - بدون Delay
   Future<void> _connectToCoupleRoom() async {
     if (partnerId == null) return;
 
@@ -77,8 +78,7 @@ class CinemaRoomService extends ChangeNotifier {
 
     SocketService.connect(userId: userId, roomId: _currentRoomId!);
 
-    await Future.delayed(const Duration(milliseconds: 500));
-
+    // 🔥 بلافاصله بعد از connect
     sendWithData('get_room_info', {'roomId': _currentRoomId});
     sendWithData(
         'check_partner_status', {'userId': userId, 'partnerId': partnerId});
@@ -135,52 +135,33 @@ class CinemaRoomService extends ChangeNotifier {
     _connectToCoupleRoom();
   }
 
+  // 🔥 مدیریت پیام‌های Socket - ادغام شده
   void _handleSocketMessage(Map<String, dynamic> message) {
     final action = message['action'] as String?;
     debugPrint('📩 CinemaRoomService: $action');
 
     switch (action) {
-      case 'room_info':
-        _videoUrl = message['videoUrl']?.toString();
-        if (_videoUrl != null && _videoUrl!.isNotEmpty) {
-          onVideoSelected?.call();
-        }
-        notifyListeners();
-        break;
-
+      // 🔥 ادغام partner_online و partner_status
       case 'partner_online':
-        _isPartnerOnline = true;
-        _status = RoomStatus.partnerReady;
-        _isPartnerReady = message['isReady'] == true;
-        onPartnerJoined?.call();
-        onPartnerReadyChanged?.call();
-        notifyListeners();
-        break;
-
       case 'partner_status':
-        _isPartnerOnline = message['isOnline'] == true;
+        _isPartnerOnline = message['isOnline'] == true ||
+            message['isReady'] == true ||
+            message['isReady'] == true;
         _isPartnerReady = message['isReady'] == true;
         if (_partnerName == null || _partnerName!.isEmpty) {
           _partnerName =
               message['partnerName']?.toString() ?? partnerId ?? 'پارتنر';
         }
-        if (_isPartnerOnline) {
-          _status = RoomStatus.partnerReady;
-          onPartnerJoined?.call();
-        }
+        _status = _isPartnerOnline
+            ? RoomStatus.partnerReady
+            : RoomStatus.waitingForPartner;
+        if (_isPartnerOnline) onPartnerJoined?.call();
         onPartnerReadyChanged?.call();
         notifyListeners();
         break;
 
+      // 🔥 ادغام partner_left و partner_disconnected
       case 'partner_left':
-        _isPartnerOnline = false;
-        _isPartnerReady = false;
-        _status = RoomStatus.waitingForPartner;
-        onPartnerLeft?.call();
-        onPartnerReadyChanged?.call();
-        notifyListeners();
-        break;
-
       case 'partner_disconnected':
         _isPartnerOnline = false;
         _isPartnerReady = false;
@@ -211,6 +192,14 @@ class CinemaRoomService extends ChangeNotifier {
         notifyListeners();
         break;
 
+      case 'room_info':
+        _videoUrl = message['videoUrl']?.toString();
+        if (_videoUrl != null && _videoUrl!.isNotEmpty) {
+          onVideoSelected?.call();
+        }
+        notifyListeners();
+        break;
+
       case 'start_cinema':
         _status = RoomStatus.starting;
         notifyListeners();
@@ -229,20 +218,9 @@ class CinemaRoomService extends ChangeNotifier {
     SocketService.send(action, data: data);
   }
 
-  Future<void> _disconnect() async {
-    if (SocketService.isConnected) {
-      try {
-        SocketService.send('leave_room');
-        await Future.delayed(const Duration(milliseconds: 200));
-      } catch (e) {
-        debugPrint('⚠️ خطا در قطع اتصال: $e');
-      }
-    }
-    SocketService.close();
-  }
-
+  // 🔥 خروج از روم - بدون بستن Socket
   Future<void> leaveRoom() async {
-    await _disconnect();
+    send('leave_room'); // فقط پیام بفرست
     _currentRoomId = null;
     _videoUrl = null;
     _status = RoomStatus.disconnected;

@@ -289,7 +289,7 @@ class _CalendarPageState extends State<CalendarPage>
 
     return Scaffold(
       extendBody: true, // 👈 این خط رو اضافه کن
-      backgroundColor: Colors.transparent,
+      backgroundColor: softBg,
       body: Stack(
         children: [
           FadeTransition(
