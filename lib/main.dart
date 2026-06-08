@@ -75,15 +75,11 @@ void main() async {
         ChangeNotifierProxyProvider<AppProvider, PeriodProvider>(
           create: (_) => PeriodProvider(),
           update: (_, appProvider, periodProvider) {
+            // 🔥 فقط کاربران مونث باید دوره خودشون رو لود کنن
             if (appProvider.userId != null &&
+                appProvider.gender == 'female' &&
                 periodProvider!.currentUserId == null) {
-              final targetId = (appProvider.gender == 'female')
-                  ? appProvider.userId
-                  : appProvider.partnerId;
-
-              if (targetId != null && targetId.isNotEmpty) {
-                periodProvider.init(targetId);
-              }
+              periodProvider.init(appProvider.userId!);
             }
             return periodProvider!;
           },

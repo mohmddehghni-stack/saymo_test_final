@@ -22,6 +22,9 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/widgets/locked_widget.dart';
 import '../widgets/body_cards.dart';
 import 'package:flutter_application_1/shared/services/api_service.dart';
+import 'package:flutter_application_1/core/providers/moment_provider.dart';
+import 'package:flutter_application_1/core/providers/period_provider.dart';
+import 'package:flutter_application_1/core/providers/app_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -39,20 +42,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    final appProvider = context.read<AppProvider>();
+
+    // ۱. اگه پارتنر از قبل توی SharedPreferences بوده، فوراً داده‌هاش رو بگیر
+    if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
+      context.read<PeriodProvider>().loadPartnerData();
+    }
+
+    // ۲. فقط یک Listener برای همه‌ی تغییرات
+    appProvider.addListener(() {
+      if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
+        context.read<PeriodProvider>().loadPartnerData();
+        _connectToSocket(); // سوکت رو به اتاق couple_ تغییر بده
+        _stopSmartTimer(); // تایمر دیگه لازم نیست
+      }
+    });
+
     _connectToSocket();
     _tryPullPartner();
-    _startSmartTimer(); // ← به جای تایمر ساده
+    _startSmartTimer();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _isAppInForeground = true;
-      _tryPullPartner(); // چک فوری
-      _startSmartTimer(); // دوباره استارت کن
+      _tryPullPartner();
+      _startSmartTimer();
+      // 🔥 وقتی برنامه دوباره باز شد، لحظه‌ها رو به‌روز کن
+      context.read<MomentProvider>().loadMoments();
     } else if (state == AppLifecycleState.paused) {
       _isAppInForeground = false;
-      _stopSmartTimer(); // رفتیم تو بک‌گراند، تایمر بخواب
+      _stopSmartTimer();
     }
   }
 
@@ -64,8 +86,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return;
       }
       final appProvider = context.read<AppProvider>();
-      if (appProvider.partnerId != null) {
-        _stopSmartTimer(); // پارتنر اومد، تایمر خودکشی کن
+      // 🔥 اگر coupleId داریم و پارتنر هم داریم، دیگه نیازی به تایمر نیست
+      if (appProvider.coupleId != null && appProvider.partnerId != null) {
+        _stopSmartTimer();
         return;
       }
       _tryPullPartner();
@@ -86,32 +109,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> _tryPullPartner() async {
     final appProvider = context.read<AppProvider>();
-    if (appProvider.userId != null && appProvider.partnerId == null) {
-      try {
-        final response = await ApiService.getProfile();
+    if (appProvider.userId == null) return;
 
-        // 🔥 ذخیره coupleId (اگر وجود داشت)
-        if (response['user']?['couple_id'] != null) {
-          appProvider.setCoupleId(response['user']['couple_id']);
-        }
+    try {
+      final response = await ApiService.getProfile();
 
-        // 🔥 ذخیره اطلاعات خود کاربر (اگر تازه لود شده)
-        if (response['user'] != null) {
-          final user = response['user'];
+      // ذخیره coupleId
+      if (response['user']?['couple_id'] != null) {
+        appProvider.setCoupleId(response['user']['couple_id']);
+      }
 
-          // 🔥 ذخیره userId فقط اگر وجود داشت
-          final userId = user['id'];
-          if (userId != null) {
-            appProvider.setUserId(userId.toString());
-          }
+      // ذخیره اطلاعات خود کاربر
+      if (response['user'] != null) {
+        final user = response['user'];
+        final userId = user['id'];
+        if (userId != null) appProvider.setUserId(userId.toString());
+        appProvider.setDisplayName(user['display_name'] ?? '');
+        appProvider.setGender(user['gender'] ?? '');
+      }
 
-          // 🔥 ذخیره displayName (با فیدبک خالی اگر نبود)
-          appProvider.setDisplayName(user['display_name'] ?? '');
-
-          // 🔥 ذخیره gender
-          appProvider.setGender(user['gender'] ?? '');
-        }
-
+      // اگر پارتنر وصل نشده بود و حالا وصل شد
+      if (appProvider.partnerId == null) {
         final partner = response['partner'];
         if (partner != null) {
           appProvider.connectPartner(
@@ -120,10 +138,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             displayName: partner['display_name'],
             partnerGender: partner['gender'],
           );
+          context.read<PeriodProvider>().loadPartnerData();
+          // 🔥 این دو خط را اضافه کن:
+          _connectToSocket(); // اتاق را به couple_ تغییر بده
           _forceStopTimerIfConnected();
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
   }
 
   void _connectToSocket() {
@@ -131,25 +152,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final token = ApiService.token;
     if (token == null || appProvider.userId == null) return;
 
-    // ساخت roomId معتبر برای زوج
     String roomId;
     if (appProvider.partnerId != null) {
       final ids = [appProvider.userId!, appProvider.partnerId!]..sort();
       roomId = 'couple_${ids[0]}_${ids[1]}';
     } else {
-      // قبل از اتصال، از یه روم موقت یا cinema خودش استفاده کن
       roomId = 'cinema_${appProvider.userId}';
     }
 
     SocketService.connect(token: token, roomId: roomId);
 
     SocketService.onMessage = (data) {
-      if (data['action'] == 'incoming_invitation') {
-        _showInvitationDialog(data);
-      }
-      if (data['action'] == 'reinvite') {
-        _showReinvitationDialog(data);
-      }
+      if (data['action'] == 'incoming_invitation') _showInvitationDialog(data);
+      if (data['action'] == 'reinvite') _showReinvitationDialog(data);
     };
   }
 
@@ -228,6 +243,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    print(
+        '🏠 DEBUG HomePage -> coupleId: ${ApiService.coupleId}, token: ${ApiService.token != null ? "YES" : "NO"}');
+
     final appProvider = context.watch<AppProvider>();
 
     return Scaffold(

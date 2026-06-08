@@ -213,9 +213,13 @@ class CalendarProvider extends ChangeNotifier {
       if (token == null) return;
 
       final uri = Uri.parse('https://couple-api.liara.run/api/calendar/notes');
+      print(
+          '🔍 LOAD NOTES -> coupleId: ${ApiService.coupleId}, token: ${token.substring(0, 10)}...');
       final response = await http.get(uri, headers: {
         'Authorization': 'Bearer $token',
       });
+      print('🔍 LOAD RESPONSE: ${response.statusCode}');
+      print('🔍 LOAD BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -232,6 +236,7 @@ class CalendarProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
+      print('❌ LOAD ERROR: $e');
       debugPrint('❌ _loadNotesSilent error: $e');
     } finally {
       _isLoadingNotes = false;
@@ -280,6 +285,8 @@ class CalendarProvider extends ChangeNotifier {
         }),
         headers: _authHeaders,
       );
+      print('🔍 SERVER RESPONSE: ${response.statusCode}');
+      print('🔍 SERVER BODY: ${response.body}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         _syncStatus = SyncStatus.synced;
 

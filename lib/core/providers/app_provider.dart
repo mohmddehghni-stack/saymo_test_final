@@ -119,9 +119,10 @@ class AppProvider extends ChangeNotifier {
 
   void setCoupleId(String id) async {
     _coupleId = id;
-    ApiService.setToken(ApiService.token,
-        coupleId: id); // 🔥 به ApiService هم بگو
+    ApiService.setToken(ApiService.token, coupleId: id);
     notifyListeners();
+
+    // 🔥 این خط رو حتماً اضافه کن
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('coupleId', id);
   }

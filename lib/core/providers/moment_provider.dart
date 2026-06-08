@@ -125,7 +125,8 @@ class MomentProvider extends ChangeNotifier {
   }
 
   void _handleSocketMessage(Map<String, dynamic> data) {
-    if (data['action'] == 'moment_updated' ||
+    if (data['action'] == 'moment_created' || // 👈 اضافه کن
+        data['action'] == 'moment_updated' ||
         data['action'] == 'moment_deleted') {
       loadMoments();
     }

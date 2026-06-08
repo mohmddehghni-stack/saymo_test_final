@@ -70,6 +70,14 @@ class _LoginPageState extends State<LoginPage> {
         // پروفایل رو بگیر
         try {
           final profileResponse = await ApiService.getProfile();
+          print('🔥 FULL profile response: $profileResponse');
+
+          // 🔥 ذخیره coupleId (اگر وجود داشت)
+          if (profileResponse['user']?['couple_id'] != null) {
+            final coupleId = profileResponse['user']['couple_id'];
+            appProvider.setCoupleId(coupleId);
+            ApiService.setToken(response['token'], coupleId: coupleId);
+          }
 
           if (profileResponse['partner'] != null) {
             appProvider.connectPartner(
