@@ -8,6 +8,7 @@ import 'video_watch_ui_page.dart';
 import 'package:flutter_application_1/shared/services/video_upload_service.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_application_1/shared/services/socket_service.dart';
 
 class CinemaRoomPage extends StatefulWidget {
   const CinemaRoomPage({super.key});
@@ -53,6 +54,7 @@ class _CinemaRoomPageState extends State<CinemaRoomPage>
       partnerId: appProvider.partnerId,
       partnerDisplayName: appProvider.partnerUsername ?? 'پارتنر',
     );
+    SocketService.addReconnectCallback(_onSocketReconnect);
 
     _roomService.onStartCinema = () {
       if (mounted) _startCountdown();
@@ -114,10 +116,14 @@ class _CinemaRoomPageState extends State<CinemaRoomPage>
     );
   }
 
+  void _onSocketReconnect() {
+    _roomService.notifyReconnect();
+  }
+
   void _onRoomStateChanged() {
     if (!mounted) return;
     setState(() {
-      _isPartnerReady = _roomService.isPartnerOnline;
+      _isPartnerReady = _roomService.isPartnerReady;
       _isHostReady = _roomService.isHostReady;
       _isCountdownStarted = false;
     });
@@ -188,6 +194,7 @@ class _CinemaRoomPageState extends State<CinemaRoomPage>
 
   @override
   void dispose() {
+    SocketService.removeReconnectCallback(_onSocketReconnect);
     _roomService.removeListener(_onRoomStateChanged);
     _pulseController.dispose();
     _seatAnimController.dispose();

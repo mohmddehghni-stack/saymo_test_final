@@ -38,8 +38,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isAppInForeground = true;
   bool _isMenuOpen = false;
 
-  String _activeTab = 'home';
-
   @override
   void initState() {
     super.initState();
@@ -337,11 +335,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 clipBehavior: Clip.none,
                 children: [
                   buildBottomNav(context, activePage: 'home'),
-                  const Positioned(
-                    bottom: 80, // ارتفاع FAB
-                    right: 16,
-                    child: _CinemaFAB(),
-                  ),
                 ],
               ),
             ),

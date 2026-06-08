@@ -53,7 +53,7 @@ class ImageService {
       // مرحله ۲: اگه هنوز > ۲۰۰KB، با کیفیت ۴۰٪
       if (result.length > 200 * 1024) {
         result = await FlutterImageCompress.compressWithList(
-          bytes,
+          result,
           quality: 40,
           minWidth: 512,
           minHeight: 512,
@@ -104,8 +104,13 @@ class ImageService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       final result = jsonDecode(response.body);
+      final relativeUrl = result['avatarUrl'];
 
-      return result['avatarUrl'];
+      // 🔥 تبدیل آدرس نسبی به کامل
+      if (relativeUrl != null && relativeUrl.startsWith('/')) {
+        return 'https://couple-api.liara.run$relativeUrl';
+      }
+      return relativeUrl; // اگر از قبل کامل بود، همونو برگردون
     } catch (e) {
       return null;
     }

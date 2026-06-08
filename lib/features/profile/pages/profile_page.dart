@@ -28,6 +28,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -187,144 +188,158 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xfff5f5f5),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                ProfileHeader(
-                  username: appProvider.displayName ??
-                      appProvider.username ??
-                      'کاربر',
-                  userId: _userData?['public_id'] ?? '',
-                  gender: _userData?['gender'] ?? 'male',
-                  imageUrl: _userData?['avatar_url'],
-                  onLogout: () => showLogoutDialog(context),
-                  onCameraTap: () async {
-                    final result = await AvatarPickerDialog.show(context,
-                        hasImage: _userData?['avatar_url'] != null);
+      child: Stack(
+        // 🔥 کل صفحه رو توی یک Stack می‌ذاریم
+        children: [
+          Scaffold(
+            backgroundColor: const Color(0xfff5f5f5),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ProfileHeader(
+                      username: appProvider.displayName ??
+                          appProvider.username ??
+                          'کاربر',
+                      userId: _userData?['public_id'] ?? '',
+                      gender: _userData?['gender'] ?? 'male',
+                      imageUrl: _userData?['avatar_url'],
+                      onLogout: () => showLogoutDialog(context),
+                      onCameraTap: () async {
+                        final result = await AvatarPickerDialog.show(context,
+                            hasImage: _userData?['avatar_url'] != null);
 
-                    if (result == 'delete') {
-                      // 🔥 حذف لوکال
-                      setState(() => _userData?.remove('avatar_url'));
-                      appProvider.setAvatarUrl(null);
+                        if (result == 'delete') {
+                          setState(() => _userData?.remove('avatar_url'));
+                          appProvider.setAvatarUrl(null);
+                          try {
+                            await http.post(
+                              Uri.parse(
+                                  '${ApiService.baseUrl}/upload/avatar-delete'),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ${ApiService.token}',
+                              },
+                            );
+                          } catch (e) {}
+                        } else if (result != null && mounted) {
+                          // 👈 اینجا لودینگ رو فعال کن
+                          setState(() => _isUploading = true);
 
-                      // 🔥 notify سرور برای پارتنر
-                      try {
-                        await http.post(
-                          Uri.parse(
-                              '${ApiService.baseUrl}/upload/avatar-delete'),
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ${ApiService.token}',
-                          },
+                          final avatarUrl =
+                              await ImageService.uploadAvatar(result);
+
+                          // 👈 بعد از اتمام آپلود، لودینگ رو غیرفعال کن
+                          setState(() {
+                            if (avatarUrl != null) {
+                              if (_userData != null) {
+                                _userData!['avatar_url'] = avatarUrl;
+                              } else {
+                                _userData = {'avatar_url': avatarUrl};
+                              }
+                            }
+                            _isUploading = false;
+                          });
+                          appProvider.setAvatarUrl(avatarUrl);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ProfileIdCard(
+                      publicId: user['public_id'] ?? '',
+                      onCopy: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('آیدی کپی شد! 📋',
+                                  style: TextStyle(fontFamily: 'Vazir'))),
                         );
-                      } catch (e) {}
-                    } else if (result != null && mounted) {
-                      // 🔥 آپلود روی سرور
-                      final avatarUrl = await ImageService.uploadAvatar(result);
-                      if (avatarUrl != null) {
-                        setState(() {
-                          if (_userData != null) {
-                            _userData!['avatar_url'] = avatarUrl;
-                          } else {
-                            _userData = {'avatar_url': avatarUrl};
-                          }
-                        });
-                        appProvider.setAvatarUrl(avatarUrl);
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                ProfileIdCard(
-                  publicId: user['public_id'] ?? '',
-                  onCopy: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('آیدی کپی شد! 📋',
-                              style: TextStyle(fontFamily: 'Vazir'))),
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                PartnerInfoCard(
-                  displayName: appProvider.partnerDisplayName ??
-                      appProvider.partnerUsername,
-                  username: appProvider.partnerId,
-                  imageUrl: appProvider.partnerAvatarUrl,
-                  gender: appProvider.partnerGender, // 🔥 از سرور
-                ),
-                const SizedBox(height: 12),
-                // تو profile_page.dart:
-                ProfileInfoCard(
-                  displayName: appProvider.displayName ?? '',
-                  username: appProvider.username ?? '',
-                  phone: _userData?['phone'] ?? '',
-                  gender: _userData?['gender'] ?? '',
-                ),
-                const SizedBox(height: 12),
-                ProfilePartnerCard(
-                  isConnected: appProvider.isConnected,
-                  partnerName: appProvider.partnerUsername,
-                ),
-                const SizedBox(height: 12),
-                const ThemeSection(),
-                const SizedBox(height: 10),
-                const SupportButton(),
-                const SizedBox(height: 10),
-                // 🗑️ دکمه حذف حساب
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: InkWell(
-                    onTap: () => _showDeleteAccountDialog(context),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    PartnerInfoCard(
+                      displayName: appProvider.partnerDisplayName ??
+                          appProvider.partnerUsername,
+                      username: appProvider.partnerId,
+                      imageUrl: appProvider.partnerAvatarUrl,
+                      gender: appProvider.partnerGender,
+                    ),
+                    const SizedBox(height: 12),
+                    ProfileInfoCard(
+                      displayName: appProvider.displayName ?? '',
+                      username: appProvider.username ?? '',
+                      phone: _userData?['phone'] ?? '',
+                      gender: _userData?['gender'] ?? '',
+                    ),
+                    const SizedBox(height: 12),
+                    ProfilePartnerCard(
+                      isConnected: appProvider.isConnected,
+                      partnerName: appProvider.partnerUsername,
+                    ),
+                    const SizedBox(height: 12),
+                    const ThemeSection(),
+                    const SizedBox(height: 10),
+                    const SupportButton(),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: InkWell(
+                        onTap: () => _showDeleteAccountDialog(context),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.red.shade200),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.delete_forever_rounded,
-                              color: Colors.red, size: 20),
-                          SizedBox(width: 8),
-                          Text('حذف حساب کاربری',
-                              style: TextStyle(
-                                  fontFamily: 'Vazir',
-                                  fontSize: 14,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.w500)),
-                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.delete_forever_rounded,
+                                  color: Colors.red, size: 20),
+                              SizedBox(width: 8),
+                              Text('حذف حساب کاربری',
+                                  style: TextStyle(
+                                      fontFamily: 'Vazir',
+                                      fontSize: 14,
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerDocked,
+            floatingActionButton: SizedBox(
+              height: 68,
+              width: 68,
+              child: FloatingActionButton(
+                backgroundColor: AppColors.primary,
+                elevation: 8,
+                shape: const CircleBorder(),
+                onPressed: () {},
+                child: const Icon(Icons.play_arrow_rounded,
+                    size: 45, color: Colors.white),
+              ),
+            ),
+            bottomNavigationBar: buildBottomNav(context, activePage: 'profile'),
           ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: SizedBox(
-          height: 68,
-          width: 68,
-          child: FloatingActionButton(
-            backgroundColor: AppColors.primary,
-            elevation: 8,
-            shape: const CircleBorder(),
-            onPressed: () {},
-            child: const Icon(Icons.play_arrow_rounded,
-                size: 45, color: Colors.white),
-          ),
-        ),
-        bottomNavigationBar: buildBottomNav(context, activePage: 'profile'),
+          // 🔥 لایه لودینگ آپلود
+          if (_isUploading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            ),
+        ],
       ),
     );
   }

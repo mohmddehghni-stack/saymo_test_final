@@ -62,6 +62,7 @@ class CinemaRoomService extends ChangeNotifier {
     if (partnerId != null) {
       _connectToCoupleRoom();
     }
+    SocketService.addReconnectCallback(_onSocketReconnect);
   }
 
   String get _coupleRoomId {
@@ -70,14 +71,14 @@ class CinemaRoomService extends ChangeNotifier {
     return 'couple_${ids[0]}_${ids[1]}';
   }
 
-  // 🔥 اتصال به روم - بدون Delay
+  // 🔥 اتصال به روم (بدون قطع و وصل اضافی)
   Future<void> _connectToCoupleRoom() async {
     if (partnerId == null) return;
 
     _currentRoomId = _coupleRoomId;
     _status = RoomStatus.waitingForPartner;
 
-    final token = ApiService.token; // 🔥 توکن رو از ApiService بگیر
+    final token = ApiService.token;
     if (token == null) {
       debugPrint('❌ Cannot connect to room: missing token');
       return;
@@ -85,18 +86,48 @@ class CinemaRoomService extends ChangeNotifier {
 
     SocketService.connect(token: token, roomId: _currentRoomId!);
 
-    // 🔥 بلافاصله بعد از connect
-    sendWithData('get_room_info', {'roomId': _currentRoomId});
-    sendWithData(
-        'check_partner_status', {'userId': userId, 'partnerId': partnerId});
+    // اعلام حضور خودم
     sendWithData('partner_online', {
       'userId': userId,
       'isReady': _isHostReady,
       'partnerId': partnerId,
       'hostName': _partnerName ?? userId,
+      'isOnline': true,
+    });
+
+    // درخواست وضعیت پارتنر (فوری)
+    sendWithData('check_partner_status', {
+      'userId': userId,
+      'partnerId': partnerId,
+    });
+
+    // 🔥 یه بار دیگه بعد از ۱ ثانیه وضعیت رو چک کن (برای رفع Race Condition)
+    Future.delayed(const Duration(seconds: 1), () {
+      if (SocketService.isConnected) {
+        sendWithData('check_partner_status', {
+          'userId': userId,
+          'partnerId': partnerId,
+        });
+      }
     });
 
     notifyListeners();
+  }
+
+  Future<void> reconnect() async {
+    await _connectToCoupleRoom();
+    // بعد از وصل شدن، وضعیت آماده بودن رو دوباره بگیر
+    sendWithData('check_partner_status', {
+      'userId': userId,
+      'partnerId': partnerId,
+    });
+    // ویدئو رو هم دوباره بگیر
+    sendWithData('get_room_info', {'roomId': _currentRoomId});
+  }
+
+  void _onSocketReconnect() {
+    debugPrint('🔄 CinemaRoomService: Socket reconnected');
+    _connectToCoupleRoom();
   }
 
   Future<void> selectVideo(String videoUrl, String videoTitle) async {
@@ -106,7 +137,6 @@ class CinemaRoomService extends ChangeNotifier {
       'videoTitle': videoTitle,
       'selectedBy': userId,
     });
-    SocketService.send('update_room_info', data: {'videoUrl': videoUrl});
     notifyListeners();
     onVideoSelected?.call();
   }
@@ -142,32 +172,33 @@ class CinemaRoomService extends ChangeNotifier {
     _connectToCoupleRoom();
   }
 
-  // 🔥 مدیریت پیام‌های Socket - ادغام شده
+  // 🔥 مدیریت پیام‌های Socket (تصحیح‌شده)
   void _handleSocketMessage(Map<String, dynamic> message) {
     final action = message['action'] as String?;
     debugPrint('📩 CinemaRoomService: $action');
 
     switch (action) {
-      // 🔥 ادغام partner_online و partner_status
       case 'partner_online':
-      case 'partner_status':
-        _isPartnerOnline = message['isOnline'] == true ||
-            message['isReady'] == true ||
-            message['isReady'] == true;
+        // 🔥 همینکه این پیام اومد یعنی پارتنر آنلاینه
+        _isPartnerOnline = true;
         _isPartnerReady = message['isReady'] == true;
         if (_partnerName == null || _partnerName!.isEmpty) {
           _partnerName =
-              message['partnerName']?.toString() ?? partnerId ?? 'پارتنر';
+              message['hostName']?.toString() ?? partnerId ?? 'پارتنر';
         }
-        _status = _isPartnerOnline
-            ? RoomStatus.partnerReady
-            : RoomStatus.waitingForPartner;
-        if (_isPartnerOnline) onPartnerJoined?.call();
+        _status = RoomStatus.partnerReady;
+        onPartnerJoined?.call();
         onPartnerReadyChanged?.call();
         notifyListeners();
         break;
 
-      // 🔥 ادغام partner_left و partner_disconnected
+      case 'partner_status':
+        _isPartnerOnline = message['isOnline'] == true;
+        _isPartnerReady = message['isReady'] == true;
+        onPartnerReadyChanged?.call();
+        notifyListeners();
+        break;
+
       case 'partner_left':
       case 'partner_disconnected':
         _isPartnerOnline = false;
@@ -225,9 +256,8 @@ class CinemaRoomService extends ChangeNotifier {
     SocketService.send(action, data: data);
   }
 
-  // 🔥 خروج از روم - بدون بستن Socket
   Future<void> leaveRoom() async {
-    send('leave_room'); // فقط پیام بفرست
+    send('leave_room');
     _currentRoomId = null;
     _videoUrl = null;
     _status = RoomStatus.disconnected;
@@ -239,6 +269,7 @@ class CinemaRoomService extends ChangeNotifier {
 
   @override
   void dispose() {
+    SocketService.removeReconnectCallback(_onSocketReconnect);
     SocketService.removeHandler(_handleSocketMessage);
     onStartCinema = null;
     onPartnerJoined = null;

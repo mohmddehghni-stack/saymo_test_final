@@ -14,6 +14,7 @@ class AppProvider extends ChangeNotifier {
   int _feelingValue = 0;
   String _moodEmoji = '😊';
   bool _isConnected = false;
+  bool _isPartnerOnline = false;
   String? _partnerUsername;
   String? _partnerId;
   String? _userId;
@@ -30,6 +31,7 @@ class AppProvider extends ChangeNotifier {
   int get feelingValue => _feelingValue;
   String get moodEmoji => _moodEmoji;
   bool get isConnected => _isConnected;
+  bool get isPartnerOnline => _isPartnerOnline;
   String? get partnerUsername => _partnerUsername;
   String? get partnerId => _partnerId;
   String? get userId => _userId;
@@ -47,6 +49,11 @@ class AppProvider extends ChangeNotifier {
 
   void incrementFeeling() {
     _feelingValue++;
+    notifyListeners();
+  }
+
+  void setPartnerOnline(bool online) {
+    _isPartnerOnline = online;
     notifyListeners();
   }
 
@@ -145,6 +152,7 @@ class AppProvider extends ChangeNotifier {
     String? partnerGender,
   }) async {
     _isConnected = true;
+    _isPartnerOnline = true;
     _partnerUsername = username;
     _partnerId = partnerId;
     _partnerDisplayName = displayName;
@@ -163,6 +171,7 @@ class AppProvider extends ChangeNotifier {
 
   void resetConnection() async {
     _isConnected = false;
+    _isPartnerOnline = false;
     _partnerUsername = null;
     _partnerId = null;
     _partnerDisplayName = null;
@@ -337,6 +346,7 @@ class AppProvider extends ChangeNotifier {
   // ──── هندلر سوکت ────
 
   void _handleSocketMessage(Map<String, dynamic> data) async {
+    // وصل شدن به پارتنر (رابطه جدید)
     if (data['action'] == 'partner_connected') {
       final d = data['data'] ?? data;
       final partnerUsername = d['partnerUsername'] ?? d['username'] ?? 'پارتنر';
@@ -345,12 +355,16 @@ class AppProvider extends ChangeNotifier {
       connectPartner(partnerUsername,
           partnerId: partnerId, displayName: partnerDisplayName);
     }
-
-    if (data['action'] == 'partner_disconnected') {
-      resetConnection();
+    // آنلاین/آفلاین شدن لحظه‌ای (فقط وضعیت سوکت)
+    else if (data['action'] == 'partner_online') {
+      _isPartnerOnline = true;
+      notifyListeners();
+    } else if (data['action'] == 'partner_disconnected') {
+      _isPartnerOnline = false;
+      notifyListeners();
     }
-
-    if (data['action'] == 'avatar_updated') {
+    // آپدیت آواتار
+    else if (data['action'] == 'avatar_updated') {
       _partnerAvatarUrl = data['data']?['avatarUrl'] ?? data['avatarUrl'];
       notifyListeners();
     }

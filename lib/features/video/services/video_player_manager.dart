@@ -43,7 +43,8 @@ class VideoPlayerManager {
 
       _controller!.addListener(() {
         if (_controller!.value.hasError) {
-          debugPrint('❌ خطای پخش: ${_controller!.value.errorDescription}');
+          final friendlyError = _getUserFriendlyError(_controller!);
+          debugPrint('❌ خطای پخش: $friendlyError');
           onError?.call();
         }
         onStateChanged?.call();
@@ -73,6 +74,20 @@ class VideoPlayerManager {
       onStateChanged?.call();
       return false;
     }
+  }
+
+  String _getUserFriendlyError(VideoPlayerController controller) {
+    final error = controller.value.errorDescription?.toLowerCase() ?? '';
+    if (error.contains('403') || error.contains('forbidden')) {
+      return '🚫 دسترسی به این ویدیو محدود شده است.';
+    } else if (error.contains('404') || error.contains('not found')) {
+      return '🔍 ویدیو پیدا نشد. لینک را بررسی کنید.';
+    } else if (error.contains('network') || error.contains('timeout')) {
+      return '📡 مشکل در اتصال اینترنت.';
+    } else if (error.contains('codec') || error.contains('format')) {
+      return '🎞️ فرمت ویدیو پشتیبانی نمی‌شود.';
+    }
+    return '❌ خطای ناشناخته در پخش ویدیو.';
   }
 
   // 👈 togglePlay با پارامتر fromRemote
