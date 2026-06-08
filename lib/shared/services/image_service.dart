@@ -74,43 +74,28 @@ class ImageService {
   // ──────────────────── آپلود با Multipart ────────────────────
   static Future<String?> uploadAvatar(String filePath) async {
     try {
-      // خوندن فایل
       final bytes = await XFile(filePath).readAsBytes();
-
-      // 🚀 فشرده‌سازی
       final compressed = await compressAvatar(bytes);
       if (compressed == null) return null;
 
-      // 📡 ارسال با Multipart
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiService.baseUrl}/upload/avatar'),
       );
-
-      // هدر Authorization
       request.headers['Authorization'] = 'Bearer ${ApiService.token}';
-
-      // اضافه کردن فایل
       request.files.add(
         http.MultipartFile.fromBytes(
           'avatar',
           compressed,
           filename: 'avatar.jpg',
-          contentType: http.MediaType('image', 'jpeg'), // ✅ درست شد
+          contentType: http.MediaType('image', 'jpeg'),
         ),
       );
 
-      // ارسال و دریافت پاسخ
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       final result = jsonDecode(response.body);
-      final relativeUrl = result['avatarUrl'];
-
-      // 🔥 تبدیل آدرس نسبی به کامل
-      if (relativeUrl != null && relativeUrl.startsWith('/')) {
-        return 'https://couple-api.liara.run$relativeUrl';
-      }
-      return relativeUrl; // اگر از قبل کامل بود، همونو برگردون
+      return result['avatarUrl']; // 👈 سرور Base64 برمیگردونه
     } catch (e) {
       return null;
     }

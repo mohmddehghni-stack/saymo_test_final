@@ -639,7 +639,7 @@ class _CinemaRoomPageState extends State<CinemaRoomPage>
 
                           // دکمه‌ها
                           if (!_isCountdownStarted) ...[
-                            if (hasVideo && _roomService.isWatching)
+                            if (hasVideo)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: _buildContinueWatchingButton(

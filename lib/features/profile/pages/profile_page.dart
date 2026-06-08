@@ -223,13 +223,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             );
                           } catch (e) {}
                         } else if (result != null && mounted) {
-                          // 👈 اینجا لودینگ رو فعال کن
                           setState(() => _isUploading = true);
 
                           final avatarUrl =
                               await ImageService.uploadAvatar(result);
 
-                          // 👈 بعد از اتمام آپلود، لودینگ رو غیرفعال کن
+                          if (!mounted)
+                            return; // 🔥 اگر کاربر برگشت، هیچ کاری نکن
+
                           setState(() {
                             if (avatarUrl != null) {
                               if (_userData != null) {
@@ -240,7 +241,24 @@ class _ProfilePageState extends State<ProfilePage> {
                             }
                             _isUploading = false;
                           });
-                          appProvider.setAvatarUrl(avatarUrl);
+
+                          if (avatarUrl != null) {
+                            // 👈 اینو بذار بیرون از setState
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) {
+                                appProvider.setAvatarUrl(avatarUrl);
+                              }
+                            });
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'آپلود ناموفق بود. لطفاً دوباره تلاش کنید.',
+                                        style: TextStyle(fontFamily: 'Vazir'))),
+                              );
+                            }
+                          }
                         }
                       },
                     ),
