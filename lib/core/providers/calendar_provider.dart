@@ -205,32 +205,30 @@ class CalendarProvider extends ChangeNotifier {
   // 🔥 لود بی‌صدا - با debounce
   // =============================================
   Future<void> _loadNotesSilent() async {
-    if (userId == null || partnerId == null) return;
     if (_isLoadingNotes) return;
     _isLoadingNotes = true;
 
     try {
-      final uri = Uri.parse(
-          'https://couple-api.liara.run/api/calendar/notes?userId=$userId&partnerId=$partnerId');
+      final token = ApiService.token;
+      if (token == null) return;
+
+      final uri = Uri.parse('https://couple-api.liara.run/api/calendar/notes');
       final response = await http.get(uri, headers: {
-        'Authorization': 'Bearer ${ApiService.token}',
+        'Authorization': 'Bearer $token',
       });
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final notes = data['notes'] as Map<String, dynamic>?;
 
-        // 🔥 اول کل یادداشت‌ها رو پاک کن
         _savedNotes.clear();
 
-        // بعد با داده جدید پر کن
         if (notes != null && notes.isNotEmpty) {
           notes.forEach((key, dayData) {
             _savedNotes[key] = Map<String, dynamic>.from(dayData as Map);
           });
         }
 
-        // 🔥 همیشه notify کن
         notifyListeners();
       }
     } catch (e) {
@@ -251,7 +249,9 @@ class CalendarProvider extends ChangeNotifier {
 
   Future<void> addNote(int day, String text,
       {bool isPrivate = false, bool isRecurring = false}) async {
-    if (userId == null || partnerId == null) return;
+    final coupleId = ApiService.coupleId;
+    if (coupleId == null) return;
+
     final key = _makeKey(day: day);
     final previousState = _savedNotes[key] != null
         ? Map<String, dynamic>.from(_savedNotes[key]!)
@@ -272,8 +272,7 @@ class CalendarProvider extends ChangeNotifier {
       final response = await http.post(
         Uri.parse('https://couple-api.liara.run/api/calendar/notes'),
         body: jsonEncode({
-          'userId': userId,
-          'partnerId': partnerId,
+          'couple_id': coupleId,
           'day': day,
           'month': selectedMonth,
           'year': selectedYear,
@@ -284,7 +283,6 @@ class CalendarProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         _syncStatus = SyncStatus.synced;
 
-        // 🔥 اینو برگردون:
         SocketService.send('calendar_note_added', data: {
           'day': day,
           'note': text,
@@ -305,7 +303,9 @@ class CalendarProvider extends ChangeNotifier {
   }
 
   Future<void> updateNote(int day, String newText) async {
-    if (userId == null || partnerId == null) return;
+    final coupleId = ApiService.coupleId;
+    if (coupleId == null || userId == null) return;
+
     final key = _makeKey(day: day);
     if (!_savedNotes.containsKey(key) || !_savedNotes[key]!.containsKey(userId))
       return;
@@ -324,8 +324,7 @@ class CalendarProvider extends ChangeNotifier {
       final response = await http.post(
         Uri.parse('https://couple-api.liara.run/api/calendar/notes'),
         body: jsonEncode({
-          'userId': userId,
-          'partnerId': partnerId,
+          'couple_id': coupleId,
           'day': day,
           'month': selectedMonth,
           'year': selectedYear,
@@ -336,7 +335,6 @@ class CalendarProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         _syncStatus = SyncStatus.synced;
 
-        // 🔥 اضافه کن:
         SocketService.send('calendar_note_updated', data: {
           'day': day,
           'note': newText,
@@ -357,7 +355,9 @@ class CalendarProvider extends ChangeNotifier {
   }
 
   Future<void> deleteNote(int day) async {
-    if (userId == null) return;
+    final coupleId = ApiService.coupleId;
+    if (coupleId == null || userId == null) return;
+
     final key = _makeKey(day: day);
     if (!_savedNotes.containsKey(key) || !_savedNotes[key]!.containsKey(userId))
       return;
@@ -371,13 +371,17 @@ class CalendarProvider extends ChangeNotifier {
     try {
       final response = await http.delete(
         Uri.parse('https://couple-api.liara.run/api/calendar/notes'),
-        body: jsonEncode({'userId': userId, 'day': day}),
+        body: jsonEncode({
+          'couple_id': coupleId,
+          'day': day,
+          'month': selectedMonth,
+          'year': selectedYear
+        }),
         headers: _authHeaders,
       );
       if (response.statusCode == 200) {
         _syncStatus = SyncStatus.synced;
 
-        // 🔥 اضافه کن:
         SocketService.send('calendar_note_deleted', data: {
           'day': day,
           'userId': userId,

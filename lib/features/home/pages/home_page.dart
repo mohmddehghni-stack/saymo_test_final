@@ -89,6 +89,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (appProvider.userId != null && appProvider.partnerId == null) {
       try {
         final response = await ApiService.getProfile();
+
+        // 🔥 ذخیره coupleId (اگر وجود داشت)
+        if (response['user']?['couple_id'] != null) {
+          appProvider.setCoupleId(response['user']['couple_id']);
+        }
+
+        // 🔥 ذخیره اطلاعات خود کاربر (اگر تازه لود شده)
+        if (response['user'] != null) {
+          final user = response['user'];
+
+          // 🔥 ذخیره userId فقط اگر وجود داشت
+          final userId = user['id'];
+          if (userId != null) {
+            appProvider.setUserId(userId.toString());
+          }
+
+          // 🔥 ذخیره displayName (با فیدبک خالی اگر نبود)
+          appProvider.setDisplayName(user['display_name'] ?? '');
+
+          // 🔥 ذخیره gender
+          appProvider.setGender(user['gender'] ?? '');
+        }
+
         final partner = response['partner'];
         if (partner != null) {
           appProvider.connectPartner(
@@ -105,18 +128,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _connectToSocket() {
     final appProvider = context.read<AppProvider>();
-    if (appProvider.userId != null) {
-      SocketService.connect(userId: appProvider.userId!, roomId: 'home');
-      SocketService.onMessage = (data) {
-        if (data['action'] == 'incoming_invitation') {
-          _showInvitationDialog(data);
-        }
-        // 👈 جدید: گوش دادن به دعوت مجدد
-        if (data['action'] == 'reinvite') {
-          _showReinvitationDialog(data);
-        }
-      };
+    final token = ApiService.token;
+    if (token == null || appProvider.userId == null) return;
+
+    // ساخت roomId معتبر برای زوج
+    String roomId;
+    if (appProvider.partnerId != null) {
+      final ids = [appProvider.userId!, appProvider.partnerId!]..sort();
+      roomId = 'couple_${ids[0]}_${ids[1]}';
+    } else {
+      // قبل از اتصال، از یه روم موقت یا cinema خودش استفاده کن
+      roomId = 'cinema_${appProvider.userId}';
     }
+
+    SocketService.connect(token: token, roomId: roomId);
+
+    SocketService.onMessage = (data) {
+      if (data['action'] == 'incoming_invitation') {
+        _showInvitationDialog(data);
+      }
+      if (data['action'] == 'reinvite') {
+        _showReinvitationDialog(data);
+      }
+    };
   }
 
   // برای دعوت معمولی

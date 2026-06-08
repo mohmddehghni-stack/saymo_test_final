@@ -40,34 +40,39 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await ApiService.getProfile();
       if (response['user'] != null) {
         final user = response['user'];
-
-        // 🔥 displayName رو تو AppProvider ذخیره کن
         final appProvider = context.read<AppProvider>();
 
+        // 🔥 اطلاعات پایه
         if (user['display_name'] != null) {
           appProvider.setDisplayName(user['display_name']);
         }
         if (user['username'] != null) {
           appProvider.setUsername(user['username']);
         }
-// 🔥 آواتار از سرور
-        // 🔥 آواتار از سرور
         if (user['avatar_url'] != null) {
-          appProvider.setAvatarUrl(user['avatar_url']); // فقط RAM
-        }
-        // 🔥 پارتنر هم عکس داره؟
-        if (response['partner'] != null &&
-            response['partner']['avatar_url'] != null) {
-          appProvider.setPartnerAvatarUrl(
-              response['partner']['avatar_url']); // فقط RAM
+          appProvider.setAvatarUrl(user['avatar_url']);
         }
 
+        // 🔥 coupleId (جدید)
+        if (user['couple_id'] != null) {
+          appProvider.setCoupleId(user['couple_id']);
+        }
+
+        // 🔥 اطلاعات پارتنر (اگر وجود داشت)
+        final partner = response['partner'];
+        if (partner != null) {
+          appProvider.connectPartner(
+            partner['username'] ?? '',
+            partnerId: partner['id']?.toString(),
+            displayName: partner['display_name'],
+            partnerGender: partner['gender'],
+          );
+        }
+
+        // 🔥 آپدیت UI
         setState(() {
           _userData = user;
           _isLoading = false;
-          if (appProvider.avatarUrl != null) {
-            _userData?['avatar_url'] = appProvider.avatarUrl;
-          }
         });
       }
     } catch (e) {

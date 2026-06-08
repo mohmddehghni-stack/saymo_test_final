@@ -1,19 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/shared/services/api_service.dart';
 import 'package:flutter_application_1/shared/services/socket_service.dart';
 import 'package:flutter_application_1/shared/services/sync_service.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // 🔥 Hive
 
 class NoteItem {
   final int id;
   String text;
   String time;
   bool isMe;
-  bool isChecked; // 🔥 برای تیک (خط زدن)
-  bool isSelectedForDelete; // 🔥 برای انتخاب حذف
+  bool isChecked;
+  bool isSelectedForDelete;
   final DateTime createdAt;
 
   NoteItem({
@@ -35,7 +33,7 @@ class NoteItem {
       time: '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
       isMe: json['user_id'].toString() == ApiService.currentUserId,
       isChecked: json['is_checked'] ?? false,
-      isSelectedForDelete: false, // همیشه از سرور false میاد
+      isSelectedForDelete: false,
       createdAt: createdAt,
     );
   }
@@ -43,7 +41,6 @@ class NoteItem {
 
 class NotesManagerProvider extends ChangeNotifier {
   List<NoteItem> _allNotes = [];
-  String? _coupleId;
   bool _isLoading = false;
 
   List<NoteItem> get allNotes => List.unmodifiable(_allNotes);
@@ -58,25 +55,22 @@ class NotesManagerProvider extends ChangeNotifier {
   }
 
   void _init() {
-    // گوش دادن به WebSocket
     SocketService.addHandler(_handleSocketMessage);
   }
 
   void setup(String userId, String partnerId) {
-    // ساخت coupleId یکتا برای زوج
-    final ids = [userId, partnerId]..sort();
-    _coupleId = ids.join('_');
+    // دیگه نیازی به ساخت coupleId نیست
+    // ApiService.coupleId رو مستقیماً استفاده می‌کنیم
     ApiService.currentUserId = userId;
     loadNotes();
   }
 
   void _handleSocketMessage(Map<String, dynamic> data) {
     if (data['action'] == 'shared_note_update') {
-      loadNotes(); // هر تغییری از طرف پارتنر اومد، کل لیست رو دوباره بخون
+      loadNotes();
     }
   }
 
-  /// 🔥 انتخاب برای حذف
   void toggleSelectForDelete(int id) {
     final index = _allNotes.indexWhere((n) => n.id == id);
     if (index != -1) {
@@ -86,7 +80,6 @@ class NotesManagerProvider extends ChangeNotifier {
     }
   }
 
-  /// 🔥 ریست کردن انتخاب‌های حذف
   void clearDeleteSelection() {
     for (final note in _allNotes) {
       note.isSelectedForDelete = false;
@@ -96,7 +89,6 @@ class NotesManagerProvider extends ChangeNotifier {
 
   Future<void> deleteAllNotes() async {
     try {
-      // پاک کردن از سرور (اختیاری - اگه می‌خوای همه رو پاک کنی)
       for (final note in _allNotes.where((n) => n.isMe)) {
         await http.delete(
           Uri.parse('${ApiService.baseUrl}/shared-notes/${note.id}'),
@@ -111,7 +103,7 @@ class NotesManagerProvider extends ChangeNotifier {
   }
 
   Future<void> loadNotes() async {
-    if (_coupleId == null) return;
+    if (ApiService.coupleId == null) return;
     _isLoading = true;
     notifyListeners();
 
@@ -123,7 +115,6 @@ class NotesManagerProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> notesJson = jsonDecode(response.body)['notes'];
-
         _allNotes = notesJson.map((n) => NoteItem.fromJson(n)).toList();
       }
     } catch (e) {
@@ -134,11 +125,8 @@ class NotesManagerProvider extends ChangeNotifier {
     }
   }
 
-  // =============================================
-// 🔥 اضافه کردن یادداشت (قبلاً انجام شد)
-// =============================================
   Future<void> addNote(String text) async {
-    if (text.trim().isEmpty || _coupleId == null) return;
+    if (text.trim().isEmpty || ApiService.coupleId == null) return;
 
     final now = DateTime.now();
     final tempId = now.millisecondsSinceEpoch;
@@ -178,11 +166,7 @@ class NotesManagerProvider extends ChangeNotifier {
     );
   }
 
-// =============================================
-// 🔥 ویرایش یادداشت
-// =============================================
   Future<void> updateNote(int id, String newText) async {
-    // ۱. فوری UI رو آپدیت کن
     final index = _allNotes.indexWhere((n) => n.id == id);
     if (index != -1) {
       _allNotes[index].text = newText;
@@ -190,7 +174,6 @@ class NotesManagerProvider extends ChangeNotifier {
     }
 
     try {
-      // ۲. مستقیم به سرور
       final response = await http.put(
         Uri.parse('${ApiService.baseUrl}/shared-notes/$id'),
         headers: ApiService.headers,
@@ -205,7 +188,6 @@ class NotesManagerProvider extends ChangeNotifier {
       debugPrint('❌ Offline - update to queue');
     }
 
-    // ۳.失败 → صف
     await SyncService.enqueue(
       method: 'PUT',
       endpoint: '/shared-notes/$id',
@@ -214,9 +196,6 @@ class NotesManagerProvider extends ChangeNotifier {
     );
   }
 
-// =============================================
-// 🔥 تیک زدن (خط زدن) - فقط UI
-// =============================================
   void toggleTickLocal(int id) {
     final index = _allNotes.indexWhere((n) => n.id == id);
     if (index != -1) {
@@ -225,21 +204,15 @@ class NotesManagerProvider extends ChangeNotifier {
     }
   }
 
-// =============================================
-// 🔥 تیک زدن با API
-// =============================================
   Future<void> toggleTickApi(int id) async {
     final index = _allNotes.indexWhere((n) => n.id == id);
     if (index == -1) return;
 
     final newValue = !_allNotes[index].isChecked;
-
-    // ۱. فوری UI
     _allNotes[index].isChecked = newValue;
     notifyListeners();
 
     try {
-      // ۲. مستقیم به سرور
       final response = await http.patch(
         Uri.parse('${ApiService.baseUrl}/shared-notes/$id/toggle'),
         headers: ApiService.headers,
@@ -254,7 +227,6 @@ class NotesManagerProvider extends ChangeNotifier {
       debugPrint('❌ Offline - toggle to queue');
     }
 
-    // ۳.失败 → صف
     await SyncService.enqueue(
       method: 'PATCH',
       endpoint: '/shared-notes/$id/toggle',
@@ -263,16 +235,11 @@ class NotesManagerProvider extends ChangeNotifier {
     );
   }
 
-// =============================================
-// 🔥 حذف یک یادداشت
-// =============================================
   Future<void> deleteNote(int id) async {
-    // ۱. فوری از UI حذف کن
     _allNotes.removeWhere((n) => n.id == id);
     notifyListeners();
 
     try {
-      // ۲. مستقیم به سرور
       final response = await http.delete(
         Uri.parse('${ApiService.baseUrl}/shared-notes/$id'),
         headers: ApiService.headers,
@@ -286,7 +253,6 @@ class NotesManagerProvider extends ChangeNotifier {
       debugPrint('❌ Offline - delete to queue');
     }
 
-    // ۳.失败 → صف
     await SyncService.enqueue(
       method: 'DELETE',
       endpoint: '/shared-notes/$id',
@@ -295,19 +261,14 @@ class NotesManagerProvider extends ChangeNotifier {
     );
   }
 
-// =============================================
-// 🔥 حذف انتخاب‌شده‌ها
-// =============================================
   Future<void> deleteSelected() async {
     final selectedIds =
         _allNotes.where((n) => n.isSelectedForDelete).map((n) => n.id).toList();
     if (selectedIds.isEmpty) return;
 
-    // ۱. فوری از UI حذف کن
     _allNotes.removeWhere((n) => n.isSelectedForDelete);
     notifyListeners();
 
-    // ۲. برای هر کدوم
     for (final id in selectedIds) {
       try {
         final response = await http.delete(
@@ -339,7 +300,7 @@ class NotesManagerProvider extends ChangeNotifier {
   void _notifyPartner() {
     SocketService.send('shared_note_changed', data: {
       'action': 'shared_note_update',
-      'coupleId': _coupleId,
+      'coupleId': ApiService.coupleId,
     });
   }
 

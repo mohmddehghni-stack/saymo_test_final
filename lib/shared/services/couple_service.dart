@@ -20,7 +20,7 @@ class CoupleService {
         body: jsonEncode({'text': text}),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         SocketService.send('love_letter_sent', data: {'text': text});
         return true;
       }
@@ -31,26 +31,32 @@ class CoupleService {
     }
   }
 
-  /// 😊 ارسال حس و حال
-  static Future<bool> sendFeeling(String feeling) async {
+  /// 😊 ارسال حس و حال (جایگزین sendFeeling)
+  /// 😊 ارسال حس و حال به سرور (Mood)
+  static Future<bool> sendMood(String mood,
+      {int intensity = 3, String? note}) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/couple/feeling'),
+        Uri.parse('$baseUrl/couple/mood'),
         headers: {
           'Content-Type': 'application/json',
           if (ApiService.token != null)
             'Authorization': 'Bearer ${ApiService.token}',
         },
-        body: jsonEncode({'feeling': feeling}),
+        body: jsonEncode({
+          'mood': mood,
+          'intensity': intensity,
+          'note': note,
+        }),
       );
 
-      if (response.statusCode == 200) {
-        SocketService.send('feeling_sent', data: {'feeling': feeling});
+      if (response.statusCode == 201) {
+        SocketService.send('mood_sent', data: {'mood': mood});
         return true;
       }
       return false;
     } catch (e) {
-      debugPrint('❌ Feeling error: $e');
+      debugPrint('❌ Mood error: $e');
       return false;
     }
   }
@@ -67,7 +73,7 @@ class CoupleService {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         SocketService.send('miss_you_sent', data: {});
         return data['todayCount'];
@@ -99,12 +105,11 @@ class CoupleService {
     }
   }
 
-  /// 📥 گرفتن موقعیت پارتنر
-  static Future<Map<String, dynamic>?> getPartnerLocation(
-      String partnerId) async {
+  /// 📏 گرفتن فاصله (جایگزین getPartnerLocation)
+  static Future<double?> getDistance() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/couple/location/$partnerId'),
+        Uri.parse('$baseUrl/couple/distance'),
         headers: {
           'Content-Type': 'application/json',
           if (ApiService.token != null)
@@ -113,11 +118,12 @@ class CoupleService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        return (data['distance'] as num?)?.toDouble();
       }
       return null;
     } catch (e) {
-      debugPrint('❌ Get location error: $e');
+      debugPrint('❌ Get distance error: $e');
       return null;
     }
   }

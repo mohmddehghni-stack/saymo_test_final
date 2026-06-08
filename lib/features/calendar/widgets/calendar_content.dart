@@ -280,7 +280,6 @@ class CalendarContent extends StatelessWidget {
     final appProvider = context.read<AppProvider>();
     final isFemale = appProvider.gender == 'female';
 
-    // 🔥 اصلاح: رویدادهای پریود بر اساس جنسیت
     List<Jalali> periodDates;
     if (isFemale) {
       periodDates = _getPeriodDates(context, cp);
@@ -288,11 +287,9 @@ class CalendarContent extends StatelessWidget {
       periodDates = _getPartnerPeriodDatesForEvents(context, cp);
     }
 
-    // ۱. یادداشت‌ها - استفاده از savedNotesWithFullKey برای کلید String
+    // ۱. یادداشت‌ها
     cp.savedNotesWithFullKey.forEach((key, value) {
       Jalali? date;
-
-      // 🔥 حالا key همیشه String هست - split امنه
       if (key is String) {
         try {
           final parts = key.split('-');
@@ -304,18 +301,15 @@ class CalendarContent extends StatelessWidget {
             );
           }
         } catch (e) {
-          return; // فرمت نامعتبر
+          return;
         }
       } else {
-        return; // کلید نامعتبر
+        return;
       }
 
       if (date == null) return;
-
-      // فقط رویدادهای همین ماه
-      if (date.month != cp.selectedMonth || date.year != cp.selectedYear) {
+      if (date.month != cp.selectedMonth || date.year != cp.selectedYear)
         return;
-      }
 
       final dayNotes = value;
       if (dayNotes.isEmpty) return;
@@ -344,7 +338,7 @@ class CalendarContent extends StatelessWidget {
       }
     });
 
-    // ۲. روزهای پریود - با تاریخ کامل
+    // ۲. روزهای پریود
     for (final date in periodDates) {
       events.add(EventData(
         icon: '🌸',
@@ -365,9 +359,9 @@ class CalendarContent extends StatelessWidget {
           icon: moment.emoji,
           text: momentProvider.countdownText(moment),
           shortText: moment.title,
-          color: moment.category == MomentCategory.milestone
+          color: moment.category == 'milestone'
               ? Colors.amber.shade600
-              : moment.category == MomentCategory.first
+              : moment.category == 'first'
                   ? Colors.deepOrange.shade300
                   : primaryPink,
           date: moment.date,
@@ -377,9 +371,7 @@ class CalendarContent extends StatelessWidget {
       debugPrint('Error loading moments: $e');
     }
 
-    // مرتب‌سازی با تاریخ کامل
     events.sort((a, b) => a.date.toDateTime().compareTo(b.date.toDateTime()));
-
     return events;
   }
 

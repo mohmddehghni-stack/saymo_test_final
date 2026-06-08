@@ -259,9 +259,9 @@ class _CalendarPageState extends State<CalendarPage>
           icon: moment.emoji,
           text: mp.countdownText(moment),
           shortText: moment.title,
-          color: moment.category == MomentCategory.milestone
+          color: moment.category == 'milestone'
               ? Colors.amber.shade600
-              : moment.category == MomentCategory.first
+              : moment.category == 'first'
                   ? Colors.deepOrange.shade300
                   : primaryPink,
           date: moment.date,

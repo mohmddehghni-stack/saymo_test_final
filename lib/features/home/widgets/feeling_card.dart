@@ -391,7 +391,7 @@ class _FeelingCardState extends State<FeelingCard> {
   }
 
   void _showSentMessage(String feeling) {
-    CoupleService.sendFeeling(feeling);
+    CoupleService.sendMood(feeling);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$feeling برای عشقت ارسال شد! ❤️',

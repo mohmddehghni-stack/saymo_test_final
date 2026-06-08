@@ -1,29 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:hive_flutter/hive_flutter.dart'; // 🔥 اضافه کن
+import 'package:hive_flutter/hive_flutter.dart';
 
 class ApiService {
   static const String baseUrl = 'https://couple-api.liara.run/api';
 
   static String? _token;
   static String? currentUserId;
+  static String? _coupleId; // 🔥 جدید
 
   // ─────────────────────────────────────────
-  // 🔥 لود توکن از Hive (موقع شروع برنامه)
+  // 🔥 لود اطلاعات از Hive (موقع شروع برنامه)
   // ─────────────────────────────────────────
   static Future<void> init() async {
     final box = Hive.box('user_data');
     _token = box.get('token');
-    currentUserId = box.get('userId'); // اگه داری
+    currentUserId = box.get('userId');
+    _coupleId = box.get('coupleId'); // 🔥 جدید
     print('🔑 Token loaded: ${_token != null ? "YES" : "NO"}');
+    print('🆔 Couple ID loaded: $_coupleId');
   }
 
   // ─────────────────────────────────────────
-  // 🔥 ذخیره توکن (هم رم + هم Hive)
+  // 🔥 ذخیره اطلاعات (هم رم + هم Hive)
   // ─────────────────────────────────────────
-  static Future<void> setToken(String? token, {String? userId}) async {
+  static Future<void> setToken(String? token,
+      {String? userId, String? coupleId}) async {
     _token = token;
     if (userId != null) currentUserId = userId;
+    if (coupleId != null) _coupleId = coupleId; // 🔥 جدید
 
     final box = Hive.box('user_data');
     if (token != null) {
@@ -34,21 +39,27 @@ class ApiService {
     if (userId != null) {
       await box.put('userId', userId);
     }
+    if (coupleId != null) {
+      await box.put('coupleId', coupleId); // 🔥 جدید
+    }
   }
 
   // ─────────────────────────────────────────
-  // 🔥 حذف توکن (موقع خروج از حساب)
+  // 🔥 حذف اطلاعات (موقع خروج از حساب)
   // ─────────────────────────────────────────
   static Future<void> clearToken() async {
     _token = null;
     currentUserId = null;
+    _coupleId = null; // 🔥 جدید
     final box = Hive.box('user_data');
     await box.delete('token');
     await box.delete('userId');
+    await box.delete('coupleId'); // 🔥 جدید
   }
 
   // ─────────────────────────────────────────
   static String? get token => _token;
+  static String? get coupleId => _coupleId; // 🔥 جدید
 
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -56,7 +67,7 @@ class ApiService {
       };
   static Map<String, String> get headers => _headers;
 
-  // ────── بقیه متدها بدون تغییر (از _headers استفاده می‌کنن) ──────
+  // ────── احراز هویت ──────
 
   static Future<Map<String, dynamic>> register(
     String displayName,
@@ -79,7 +90,6 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  // چک کردن موجود بودن شماره تلفن
   static Future<bool> isPhoneAvailable(String phone) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/check-phone'),
@@ -90,18 +100,6 @@ class ApiService {
     return data['available'] == true;
   }
 
-  // 💕 وصل شدن به پارتنر
-  static Future<Map<String, dynamic>> connectPartner(
-      String partnerPublicId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/connect'),
-      headers: _headers,
-      body: jsonEncode({'partnerPublicId': partnerPublicId}),
-    );
-    return jsonDecode(response.body);
-  }
-
-  // چک کردن موجود بودن نام کاربری
   static Future<bool> isUsernameAvailable(String username) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/check-username'),
@@ -112,15 +110,6 @@ class ApiService {
     return data['available'] == true;
   }
 
-  static Future<Map<String, dynamic>> getProfile() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/auth/me'),
-      headers: _headers,
-    );
-    return jsonDecode(response.body);
-  }
-
-  // 🔓 ورود
   static Future<Map<String, dynamic>> login(
     String login,
     String password,
@@ -137,7 +126,48 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  // 📝 ذخیره یادداشت
+  // ────── پروفایل و اتصال ──────
+
+  static Future<Map<String, dynamic>> getProfile() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: _headers,
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> connectPartner(
+      String partnerPublicId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/connect'),
+      headers: _headers,
+      body: jsonEncode({'partnerPublicId': partnerPublicId}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // ────── چت (اصلاح‌شده) ──────
+
+  static Future<Map<String, dynamic>> sendMessage(String text) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/chat'),
+      headers: _headers,
+      body: jsonEncode({'text': text}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<List<dynamic>> getMessages() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/chat'),
+      headers: _headers,
+    );
+    final data = jsonDecode(response.body);
+    return data['messages'] ?? [];
+  }
+
+  // ────── یادداشت‌ها ──────
+
   static Future<Map<String, dynamic>> saveNote(
     int day,
     int month,
@@ -157,7 +187,6 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  // 📋 دریافت یادداشت‌ها
   static Future<List<dynamic>> getNotes() async {
     final response = await http.get(
       Uri.parse('$baseUrl/notes'),
@@ -165,29 +194,5 @@ class ApiService {
     );
     final data = jsonDecode(response.body);
     return data['notes'] ?? [];
-  }
-
-  // 💬 ارسال پیام
-  static Future<Map<String, dynamic>> sendMessage(
-    String text,
-    String time,
-    bool isMe,
-  ) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/chat'),
-      headers: _headers,
-      body: jsonEncode({'text': text, 'time': time, 'isMe': isMe}),
-    );
-    return jsonDecode(response.body);
-  }
-
-  // 📋 دریافت پیام‌ها
-  static Future<List<dynamic>> getMessages() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/chat'),
-      headers: _headers,
-    );
-    final data = jsonDecode(response.body);
-    return data['messages'] ?? [];
   }
 }

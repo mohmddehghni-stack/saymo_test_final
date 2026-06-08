@@ -3,7 +3,6 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-// 🔥 این خط حذف شد: import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:flutter_application_1/core/providers/moment_provider.dart';
 import 'package:flutter_application_1/core/providers/calendar_provider.dart';
 import 'package:flutter_application_1/features/calendar/data/preset_moments.dart';
@@ -40,13 +39,12 @@ class AddMomentSheet {
   static void show(BuildContext context, MomentProvider momentProvider) {
     final titleController = TextEditingController();
     final _searchController = TextEditingController();
-    MomentCategory selectedCategory = MomentCategory.appointment;
+    String selectedCategory = 'appointment'; // 🔥 تغییر نوع
     String selectedEmoji = '🎉';
     final Set<String> _selectedTitles = {};
     Jalali selectedDate = Jalali.now();
     bool isRecurring = false;
     bool isPrivate = false;
-    final cp = context.read<CalendarProvider>();
 
     showModalBottomSheet(
       context: context,
@@ -97,10 +95,10 @@ class AddMomentSheet {
                     _buildCategoryOption(
                         '🎉',
                         'قرار',
-                        MomentCategory.appointment,
+                        'appointment',
                         selectedCategory,
                         () => setSheetState(() {
-                              selectedCategory = MomentCategory.appointment;
+                              selectedCategory = 'appointment';
                               selectedEmoji = '🎉';
                               _selectedTitles.clear();
                               _searchController.clear();
@@ -109,10 +107,10 @@ class AddMomentSheet {
                     _buildCategoryOption(
                         '💎',
                         'مناسبت',
-                        MomentCategory.milestone,
+                        'milestone',
                         selectedCategory,
                         () => setSheetState(() {
-                              selectedCategory = MomentCategory.milestone;
+                              selectedCategory = 'milestone';
                               selectedEmoji = '💎';
                               _selectedTitles.clear();
                               _searchController.clear();
@@ -121,10 +119,10 @@ class AddMomentSheet {
                     _buildCategoryOption(
                         '💋',
                         'اولین',
-                        MomentCategory.first,
+                        'first',
                         selectedCategory,
                         () => setSheetState(() {
-                              selectedCategory = MomentCategory.first;
+                              selectedCategory = 'first';
                               selectedEmoji = '💋';
                               _selectedTitles.clear();
                               _searchController.clear();
@@ -133,7 +131,7 @@ class AddMomentSheet {
                   const SizedBox(height: 16),
 
                   // ─── مناسبت‌ها ───
-                  if (selectedCategory == MomentCategory.milestone) ...[
+                  if (selectedCategory == 'milestone') ...[
                     const Align(
                         alignment: Alignment.centerRight,
                         child: Text('انتخاب مناسبت:',
@@ -358,7 +356,7 @@ class AddMomentSheet {
                               spacing: 8,
                               runSpacing: 8,
                               children: PresetMoments.getPresetsForCategory(
-                                      selectedCategory == MomentCategory.first
+                                      selectedCategory == 'first'
                                           ? 'first'
                                           : 'appointment')
                                   .map((preset) {
@@ -396,7 +394,7 @@ class AddMomentSheet {
                     const SizedBox(height: 16),
                   ],
 
-                  // 🔥🔥🔥 تاریخ - فقط این بخش تغییر کرده 🔥🔥🔥
+                  // تاریخ
                   InkWell(
                     onTap: () async {
                       final picked = await _showJalaliDatePicker(
@@ -454,28 +452,24 @@ class AddMomentSheet {
                     child: ElevatedButton(
                       onPressed: () async {
                         final mp = context.read<MomentProvider>();
-
-                        // 🔥 اگه init نشده، مقدار بده
                         if (!mp.isInitialized) {
                           final appProvider = context.read<AppProvider>();
                           if (appProvider.userId != null &&
                               appProvider.partnerId != null &&
                               appProvider.partnerId!.isNotEmpty) {
-                            mp.init(
-                                appProvider.userId!, appProvider.partnerId!);
+                            mp.init(); // دیگر userId و partnerId نمی‌خواهد
                           } else {
                             final prefs = await SharedPreferences.getInstance();
                             final partnerId = prefs.getString('partnerId');
                             if (partnerId != null && partnerId.isNotEmpty) {
-                              mp.init(appProvider.userId ?? '46', partnerId);
+                              mp.init();
                             } else {
                               return;
                             }
                           }
                         }
 
-                        // 🔥 برای مناسبت: ثبت همه انتخاب‌ها
-                        if (selectedCategory == MomentCategory.milestone &&
+                        if (selectedCategory == 'milestone' &&
                             _selectedTitles.isNotEmpty) {
                           for (final title in _selectedTitles) {
                             final preset = PresetMoments.milestones
@@ -483,8 +477,8 @@ class AddMomentSheet {
                             await mp.addMoment(
                               title: title,
                               date: selectedDate,
-                              startDate: Jalali.now(), // 🔥 اضافه شد
-                              category: selectedCategory,
+                              startDate: Jalali.now(),
+                              category: selectedCategory, // string
                               emoji: preset['emoji'] ?? '💎',
                               isRecurring: isRecurring,
                               isPrivate: isPrivate,
@@ -492,9 +486,7 @@ class AddMomentSheet {
                           }
                           Navigator.pop(ctx);
                           HapticFeedback.mediumImpact();
-                        }
-                        // 🔥 برای قرار/اولین: ثبت یک لحظه
-                        else if (titleController.text.trim().isNotEmpty) {
+                        } else if (titleController.text.trim().isNotEmpty) {
                           await mp.addMoment(
                             title: titleController.text.trim(),
                             date: selectedDate,
@@ -514,7 +506,7 @@ class AddMomentSheet {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14))),
                       child: Text(
-                          selectedCategory == MomentCategory.milestone
+                          selectedCategory == 'milestone'
                               ? 'ثبت ${_selectedTitles.length} لحظه ✨'
                               : 'ثبت لحظه ✨',
                           style: const TextStyle(
@@ -533,9 +525,7 @@ class AddMomentSheet {
     );
   }
 
-  // =============================================
-  // 🔥 متد جدید: پیکر تاریخ شمسی
-  // =============================================
+  // ... بقیه متدها بدون تغییر
   static Future<Jalali?> _showJalaliDatePicker({
     required BuildContext context,
     required Jalali initialDate,
@@ -555,7 +545,7 @@ class AddMomentSheet {
   }
 
   static Widget _buildCategoryOption(String emoji, String label,
-      MomentCategory category, MomentCategory selected, VoidCallback onTap) {
+      String category, String selected, VoidCallback onTap) {
     final isSelected = selected == category;
     return Expanded(
       child: GestureDetector(

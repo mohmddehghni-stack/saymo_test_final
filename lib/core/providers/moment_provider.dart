@@ -3,18 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shamsi_date/shamsi_date.dart';
 import '../../shared/services/socket_service.dart';
-import 'package:flutter_application_1/core/services/event_bus.dart';
 import 'package:flutter_application_1/shared/services/api_service.dart';
-
-enum MomentCategory { appointment, milestone, first }
 
 class Moment {
   final int? id;
   final String userId;
   final String partnerId;
+  final String? coupleId; // 🔥 جدید
   final String title;
   final Jalali date;
-  final MomentCategory category;
+  final String category;
   final String emoji;
   final bool isRecurring;
   final bool isPrivate;
@@ -26,9 +24,10 @@ class Moment {
     this.id,
     required this.userId,
     required this.partnerId,
+    this.coupleId,
     required this.title,
     required this.date,
-    this.category = MomentCategory.appointment,
+    this.category = 'appointment',
     this.emoji = '🎉',
     this.isRecurring = false,
     this.isPrivate = false,
@@ -38,13 +37,16 @@ class Moment {
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) {
-    final dateStr = json['moment_date']?.toString() ?? '';
+    final dateStr = json['moment_date']?.toString() ??
+        json['moment_date_jalali']?.toString() ??
+        '';
     final dateParts = dateStr.split('-');
 
     return Moment(
       id: json['id'],
       userId: json['user_id']?.toString() ?? '',
       partnerId: json['partner_id']?.toString() ?? '',
+      coupleId: json['couple_id']?.toString(),
       title: json['title'] ?? '',
       isPrivate: json['is_private'] == true,
       date: Jalali(
@@ -52,7 +54,7 @@ class Moment {
         int.parse(dateParts[1]),
         int.parse(dateParts[2]),
       ),
-      category: _parseCategory(json['category']),
+      category: json['category'] ?? 'appointment',
       emoji: json['emoji'] ?? '🎉',
       isRecurring: json['is_recurring'] == true,
       status: json['status'] ?? 'active',
@@ -68,42 +70,23 @@ class Moment {
         int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
   }
 
-  static MomentCategory _parseCategory(String? cat) {
-    switch (cat) {
-      case 'milestone':
-        return MomentCategory.milestone;
-      case 'first':
-        return MomentCategory.first;
-      default:
-        return MomentCategory.appointment;
-    }
-  }
-
-  String get categoryString {
-    switch (category) {
-      case MomentCategory.milestone:
-        return 'milestone';
-      case MomentCategory.first:
-        return 'first';
-      default:
-        return 'appointment';
-    }
+  // تبدیل تاریخ شمسی به میلادی برای ارسال به سرور
+  DateTime toGregorian() {
+    final d = date.toDateTime();
+    return d;
   }
 }
 
 class MomentProvider extends ChangeNotifier {
-  String? _userId;
-  String? _partnerId;
   List<Moment> _moments = [];
   bool _isLoading = false;
   String? _errorMessage;
-  bool get isInitialized => _userId != null && _partnerId != null;
 
+  bool get isInitialized => ApiService.coupleId != null;
   List<Moment> get moments => List.unmodifiable(_moments);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // 👈👈👈 گترهای مورد نیاز رو برگردون 👈👈👈
   Moment? get nearest {
     final upcoming = this.upcoming;
     if (upcoming.isEmpty) return null;
@@ -114,25 +97,6 @@ class MomentProvider extends ChangeNotifier {
       _moments.where((m) => m.status == 'passed').toList();
   List<Moment> get activeMoments =>
       _moments.where((m) => m.status == 'active').toList();
-
-  Future<List<Moment>> getHistory({String period = 'all'}) async {
-    try {
-      final uri =
-          Uri.parse('${ApiService.baseUrl}/calendar/history?period=$period');
-      final response = await http.get(uri, headers: {
-        'Authorization': 'Bearer ${ApiService.token}',
-      });
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return (data['history'] as List)
-            .map((j) => Moment.fromJson(j))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('❌ Error loading history: $e');
-    }
-    return [];
-  }
 
   List<Moment> get upcoming {
     final now = Jalali.now();
@@ -155,10 +119,8 @@ class MomentProvider extends ChangeNotifier {
     return list;
   }
 
-  void init(String userId, String partnerId) {
-    _userId = userId;
-    _partnerId = partnerId;
-    SocketService.addHandler(_handleSocketMessage); // ← اضافه کن
+  void init() {
+    SocketService.addHandler(_handleSocketMessage);
     loadMoments();
   }
 
@@ -170,30 +132,20 @@ class MomentProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoments() async {
-    if (_userId == null || _partnerId == null) return;
+    if (ApiService.coupleId == null) return;
     _isLoading = true;
     notifyListeners();
 
     try {
-      final uri = Uri.parse(
-          'https://couple-api.liara.run/api/calendar/moments?userId=$_userId&partnerId=$_partnerId');
-
-      // 🔥 Authorization رو اضافه کن
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${ApiService.token}',
-        },
-      );
-
-      debugPrint('📡 GET Status: ${response.statusCode}');
-      debugPrint('📡 GET Body: ${response.body}');
+      final uri = Uri.parse('${ApiService.baseUrl}/calendar/moments');
+      final response = await http.get(uri, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final list = data['moments'] as List;
-        if (list.isNotEmpty) {}
         _moments = list.map((j) => Moment.fromJson(j)).toList();
         _errorMessage = null;
       } else {
@@ -212,42 +164,46 @@ class MomentProvider extends ChangeNotifier {
     required String title,
     required Jalali date,
     Jalali? startDate,
-    MomentCategory category = MomentCategory.appointment,
+    String category = 'appointment',
     String emoji = '🎉',
     bool isRecurring = false,
     bool isPrivate = false,
   }) async {
-    if (_userId == null || _partnerId == null) return;
+    final coupleId = ApiService.coupleId;
+    if (coupleId == null) return;
 
-    final momentDateStr =
+    final momentDateJalali =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    final startDateStr = startDate != null
-        ? '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}'
-        : null;
+    final momentDateGregorian =
+        date.toDateTime().toIso8601String().split('T')[0]; // YYYY-MM-DD
+
+    String? startDateJalali, startDateGregorian;
+    if (startDate != null) {
+      startDateJalali =
+          '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+      startDateGregorian =
+          startDate.toDateTime().toIso8601String().split('T')[0];
+    }
 
     final body = jsonEncode({
-      'userId': _userId,
-      'partnerId': _partnerId,
       'title': title,
-      'momentDate': momentDateStr,
-      'startDate': startDateStr, // 🔥 اضافه کن
-      'category': _categoryToString(category),
+      'momentDateJalali': momentDateJalali,
+      'momentDate': momentDateGregorian,
+      'startDateJalali': startDateJalali,
+      'startDate': startDateGregorian,
+      'category': category,
       'emoji': emoji,
       'isRecurring': isRecurring,
       'isPrivate': isPrivate,
+      'couple_id': coupleId,
     });
 
     try {
-      final uri =
-          Uri.parse('https://couple-api.liara.run/api/calendar/moments');
-      final response = await http.post(
-        uri,
-        body: body,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${ApiService.token}', // 🔥 اینو داری؟
-        },
-      );
+      final uri = Uri.parse('${ApiService.baseUrl}/calendar/moments');
+      final response = await http.post(uri, body: body, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await loadMoments();
@@ -261,129 +217,107 @@ class MomentProvider extends ChangeNotifier {
     }
   }
 
-  String _categoryToString(MomentCategory cat) {
-    switch (cat) {
-      case MomentCategory.milestone:
-        return 'milestone';
-      case MomentCategory.first:
-        return 'first';
-      default:
-        return 'appointment';
-    }
-  }
-
   Future<void> updateMoment({
     required int id,
     required String title,
     required Jalali date,
-    MomentCategory category = MomentCategory.appointment,
+    String category = 'appointment',
     String emoji = '🎉',
     bool isRecurring = false,
   }) async {
-    final index = _moments.indexWhere((m) => m.id == id);
-    if (index == -1) return;
-
-    final momentDateStr =
+    final momentDateJalali =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-
-    final tempMoment = Moment(
-      id: id,
-      userId: _moments[index].userId,
-      partnerId: _moments[index].partnerId,
-      title: title,
-      date: date,
-      category: category,
-      emoji: emoji,
-      isRecurring: isRecurring,
-    );
-
-    _moments[index] = tempMoment;
-    notifyListeners();
+    final momentDateGregorian =
+        date.toDateTime().toIso8601String().split('T')[0];
 
     try {
-      final uri =
-          Uri.parse('https://couple-api.liara.run/api/calendar/moments/$id');
-      final response = await http.put(
-        uri,
-        body: jsonEncode({
-          'title': title,
-          'momentDate': momentDateStr,
-          'category': _categoryToString(category),
-          'emoji': emoji,
-          'isRecurring': isRecurring,
-        }),
-        headers: {'Content-Type': 'application/json'},
-      );
-      debugPrint('📡 PUT Status: ${response.statusCode}');
+      final uri = Uri.parse('${ApiService.baseUrl}/calendar/moments/$id');
+      final response = await http.put(uri,
+          body: jsonEncode({
+            'title': title,
+            'momentDateJalali': momentDateJalali,
+            'momentDate': momentDateGregorian,
+            'category': category,
+            'emoji': emoji,
+            'isRecurring': isRecurring,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${ApiService.token}',
+          });
+
+      if (response.statusCode == 200) {
+        await loadMoments();
+      }
     } catch (e) {
       debugPrint('❌ Error updating moment: $e');
     }
   }
 
   Future<void> deleteMoment(int id) async {
-    _moments.removeWhere((m) => m.id == id);
-    notifyListeners();
-
     try {
-      final uri =
-          Uri.parse('https://couple-api.liara.run/api/calendar/moments/$id');
-      await http.delete(uri,
-          body: jsonEncode({'userId': _userId}),
-          headers: {'Content-Type': 'application/json'});
+      final uri = Uri.parse('${ApiService.baseUrl}/calendar/moments/$id');
+      final response = await http.delete(uri, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
+
+      if (response.statusCode == 200) {
+        _moments.removeWhere((m) => m.id == id);
+        notifyListeners();
+      }
     } catch (e) {
       _errorMessage = 'خطا در حذف لحظه';
       notifyListeners();
     }
   }
 
-  // ============================================
-  // 🎯 countdown کاملاً شمسی و اصولی
-  // ============================================
+  Future<List<Moment>> getHistory({String period = 'all'}) async {
+    try {
+      final uri =
+          Uri.parse('${ApiService.baseUrl}/calendar/history?period=$period');
+      final response = await http.get(uri, headers: {
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['history'] as List)
+            .map((j) => Moment.fromJson(j))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading history: $e');
+    }
+    return [];
+  }
+
   String countdownText(Moment moment) {
     final now = Jalali.now();
     final days = _daysBetween(now, moment.date);
-
-    debugPrint(
-        '📊 Countdown: ${now.year}/${now.month}/${now.day} to ${moment.date.year}/${moment.date.month}/${moment.date.day} = $days days');
-
     if (days == 0) return 'امروز: ${moment.title} ${moment.emoji}';
     if (days == 1) return 'فردا: ${moment.title} ${moment.emoji}';
     if (days > 0) return '$days روز تا ${moment.title} ${moment.emoji}';
     return '${moment.title} ${moment.emoji}';
   }
 
-  // 👈👈👈 متد کمکی محاسبه اختلاف روز شمسی (برگردوندن int) 👈👈👈
   int _daysBetween(Jalali from, Jalali to) {
     int days = 0;
-
-    if (from.year == to.year && from.month == to.month) {
+    if (from.year == to.year && from.month == to.month)
       return to.day - from.day;
-    }
-
     if (from.year == to.year) {
       days += _getMonthDays(from.month, from.year) - from.day;
-      for (int m = from.month + 1; m < to.month; m++) {
+      for (int m = from.month + 1; m < to.month; m++)
         days += _getMonthDays(m, from.year);
-      }
       days += to.day;
       return days;
     }
-
-    // سال‌های متفاوت
     days += _getMonthDays(from.month, from.year) - from.day;
-    for (int m = from.month + 1; m <= 12; m++) {
+    for (int m = from.month + 1; m <= 12; m++)
       days += _getMonthDays(m, from.year);
-    }
-
-    for (int y = from.year + 1; y < to.year; y++) {
+    for (int y = from.year + 1; y < to.year; y++)
       days += _isLeapYear(y) ? 366 : 365;
-    }
-
-    for (int m = 1; m < to.month; m++) {
-      days += _getMonthDays(m, to.year);
-    }
+    for (int m = 1; m < to.month; m++) days += _getMonthDays(m, to.year);
     days += to.day;
-
     return days;
   }
 

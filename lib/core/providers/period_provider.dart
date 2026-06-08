@@ -337,7 +337,32 @@ class PeriodProvider extends ChangeNotifier {
     _userId = userId;
     _token = ApiService.token;
     loadFromServer();
-    _startPolling();
+  }
+
+  Future<void> saveSymptomToServer(SymptomLog log) async {
+    if (_token == null) return;
+    try {
+      await http.post(
+        Uri.parse('https://couple-api.liara.run/api/period/symptoms'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'date':
+              '${log.date.year}-${log.date.month.toString().padLeft(2, '0')}-${log.date.day.toString().padLeft(2, '0')}',
+          'dateJalali':
+              '${log.date.year}-${log.date.month.toString().padLeft(2, '0')}-${log.date.day.toString().padLeft(2, '0')}',
+          'day': log.day,
+          'pain': log.pain,
+          'mood': log.mood,
+          'symptoms': log.symptoms,
+          'note': log.note,
+        }),
+      );
+    } catch (e) {
+      debugPrint('❌ Error saving symptom: $e');
+    }
   }
 
   void _startPolling() {
@@ -468,11 +493,16 @@ class PeriodProvider extends ChangeNotifier {
   }
 
   // ===== تاریخچه علائم (فعلاً Hive محلی) =====
-  void addSymptomLog(SymptomLog log) {
+  // ===== تاریخچه علائم =====
+  Future<void> addSymptomLog(SymptomLog log) async {
+    // 🔥 async اضافه شد
     final existingIndex = _history.indexWhere((item) =>
         item.date.year == log.date.year &&
         item.date.month == log.date.month &&
         item.date.day == log.date.day);
+
+    await saveSymptomToServer(log); // 🔥 حالا می‌تونی await کنی
+
     if (existingIndex != -1) {
       _history[existingIndex] = log;
     } else {
@@ -480,6 +510,7 @@ class PeriodProvider extends ChangeNotifier {
     }
     _periodBox.put(
         '${_userId}_history', _history.map((e) => e.toJson()).toList());
+
     notifyListeners();
   }
 

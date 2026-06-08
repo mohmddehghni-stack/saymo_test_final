@@ -38,7 +38,7 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
 
     _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500), // انیمیشن نرم
+      duration: const Duration(milliseconds: 500),
     );
 
     _sinkController = AnimationController(
@@ -61,7 +61,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
       }
     });
 
-    // 🔥 شروع تایمر Real-time
     _startAutoProgress();
   }
 
@@ -73,7 +72,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
     super.dispose();
   }
 
-  // 🔥 تایمر Real-time: هر ۳۰ ثانیه Progress رو آپدیت کن
   void _startAutoProgress() {
     _progressTimer?.cancel();
     _progressTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -90,13 +88,11 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
     });
   }
 
-  // 🔥 محاسبه دقیق با ساعت و دقیقه
   double _calculateRealProgress(Moment moment) {
     final now = DateTime.now();
     final startDateTime = moment.startDate?.toDateTime() ?? now;
     final targetDateTime = moment.date.toDateTime();
 
-    // ساعت ۰۰:۰۰ روز target
     final targetDayStart = DateTime(
       targetDateTime.year,
       targetDateTime.month,
@@ -117,10 +113,8 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
     double targetProgress;
 
     if (moment.startDate != null) {
-      // 🔥 محاسبه دقیق با ساعت/دقیقه
       targetProgress = _calculateRealProgress(moment);
     } else {
-      // 🔥 فرمول خطی برای رویدادهای قدیمی
       final now = Jalali.now();
       final target = moment.date;
       final daysRemaining = _daysBetween(now, target);
@@ -133,7 +127,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
       }
     }
 
-    // 🔥 انیمیشن نرم به سمت target
     _progressController.animateTo(
       targetProgress.clamp(0.0, 1.0),
       duration: const Duration(milliseconds: 500),
@@ -364,7 +357,6 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
           ),
           if (isTop) ...[
             const SizedBox(height: 12),
-            // 🔥 Progress Bar با انیمیشن
             AnimatedBuilder(
               animation: _progressController,
               builder: (context, child) {
@@ -389,13 +381,12 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
 
   void _showEditMomentSheet(Moment moment) {
     final titleController = TextEditingController(text: moment.title);
-    MomentCategory selectedCategory = moment.category;
+    String selectedCategory = moment.category; // 🔥 حالا String
     String selectedEmoji = moment.emoji;
     Jalali selectedDate = moment.date;
     bool isRecurring = moment.isRecurring;
 
     final momentProvider = context.read<MomentProvider>();
-    final cp = context.read<CalendarProvider>();
 
     showModalBottomSheet(
       context: context,
@@ -431,27 +422,26 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      _buildCategoryChip('🎉', 'قرار',
-                          MomentCategory.appointment, selectedCategory, () {
+                      _buildCategoryChip(
+                          '🎉', 'قرار', 'appointment', selectedCategory, () {
                         setSheetState(() {
-                          selectedCategory = MomentCategory.appointment;
+                          selectedCategory = 'appointment';
                           selectedEmoji = '🎉';
                         });
                       }),
                       const SizedBox(width: 8),
-                      _buildCategoryChip('💎', 'مناسبت',
-                          MomentCategory.milestone, selectedCategory, () {
+                      _buildCategoryChip(
+                          '💎', 'مناسبت', 'milestone', selectedCategory, () {
                         setSheetState(() {
-                          selectedCategory = MomentCategory.milestone;
+                          selectedCategory = 'milestone';
                           selectedEmoji = '💎';
                         });
                       }),
                       const SizedBox(width: 8),
                       _buildCategoryChip(
-                          '💋', 'اولین', MomentCategory.first, selectedCategory,
-                          () {
+                          '💋', 'اولین', 'first', selectedCategory, () {
                         setSheetState(() {
-                          selectedCategory = MomentCategory.first;
+                          selectedCategory = 'first';
                           selectedEmoji = '💋';
                         });
                       }),
@@ -470,9 +460,9 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
                     spacing: 8,
                     runSpacing: 8,
                     children: PresetMoments.getPresetsForCategory(
-                            selectedCategory == MomentCategory.first
+                            selectedCategory == 'first'
                                 ? 'first'
-                                : selectedCategory == MomentCategory.milestone
+                                : selectedCategory == 'milestone'
                                     ? 'milestone'
                                     : 'appointment')
                         .map((preset) {
@@ -622,7 +612,7 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
                               id: moment.id!,
                               title: titleController.text.trim(),
                               date: selectedDate,
-                              category: selectedCategory,
+                              category: selectedCategory, // String
                               emoji: selectedEmoji,
                               isRecurring: isRecurring);
                           Navigator.pop(ctx);
@@ -705,8 +695,9 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
     );
   }
 
-  Widget _buildCategoryChip(String emoji, String label, MomentCategory category,
-      MomentCategory selected, VoidCallback onTap) {
+  // 🔥 اصلاح‌شده: پارامترها String
+  Widget _buildCategoryChip(String emoji, String label, String category,
+      String selected, VoidCallback onTap) {
     final isSelected = selected == category;
     return Expanded(
       child: GestureDetector(
@@ -740,18 +731,18 @@ class _MomentSwipeCardsState extends State<MomentSwipeCards>
     );
   }
 
-  List<Color> _getCategoryColors(MomentCategory category) {
+  // 🔥 اصلاح‌شده: پارامتر String
+  List<Color> _getCategoryColors(String category) {
     switch (category) {
-      case MomentCategory.milestone:
+      case 'milestone':
         return [Colors.amber.shade300, Colors.amber.shade500];
-      case MomentCategory.first:
+      case 'first':
         return [Colors.deepOrange.shade300, Colors.deepOrange.shade500];
       default:
         return [AppColors.primary, const Color(0xFFE8456B)];
     }
   }
 
-  // 👈👈👈 توابع کمکی جدید 👈👈👈
   int _daysBetween(Jalali from, Jalali to) {
     int days = 0;
     if (from.year == to.year && from.month == to.month) {

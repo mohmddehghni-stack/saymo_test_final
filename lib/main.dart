@@ -55,14 +55,14 @@ void main() async {
   appProvider.addListener(() {
     if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
       if (!momentProvider.isInitialized) {
-        momentProvider.init(appProvider.userId!, appProvider.partnerId!);
+        momentProvider.init(); // 🔥 بدون پارامتر
       }
     }
   });
 
 // اگه partnerId از الان موجود بود، همون اول راه بنداز
   if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
-    momentProvider.init(appProvider.userId!, appProvider.partnerId!);
+    momentProvider.init(); // 🔥 بدون پارامتر
   }
 
   runApp(

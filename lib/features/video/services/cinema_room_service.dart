@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../../shared/services/api_service.dart';
 import '../../../shared/services/socket_service.dart';
 
 enum RoomStatus {
@@ -76,7 +77,13 @@ class CinemaRoomService extends ChangeNotifier {
     _currentRoomId = _coupleRoomId;
     _status = RoomStatus.waitingForPartner;
 
-    SocketService.connect(userId: userId, roomId: _currentRoomId!);
+    final token = ApiService.token; // 🔥 توکن رو از ApiService بگیر
+    if (token == null) {
+      debugPrint('❌ Cannot connect to room: missing token');
+      return;
+    }
+
+    SocketService.connect(token: token, roomId: _currentRoomId!);
 
     // 🔥 بلافاصله بعد از connect
     sendWithData('get_room_info', {'roomId': _currentRoomId});
