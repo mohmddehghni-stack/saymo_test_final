@@ -374,15 +374,21 @@ class PeriodProvider extends ChangeNotifier {
 
   // 🔥 لود تنظیمات از سرور
   Future<void> loadFromServer() async {
-    if (_userId == null || _token == null) return;
+    print(
+        '🔵 loadFromServer CALLED. _token: ${_token != null ? "YES" : "NO"}, _userId: $_userId');
+    final token = ApiService.token;
+    final userId = _userId ?? ApiService.currentUserId; // از هر دو منبع
+    if (token == null || userId == null) {
+      debugPrint('❌ loadFromServer skipped: token=$token, userId=$userId');
+      return;
+    }
     try {
       final response = await http.get(
-        Uri.parse('https://couple-api.liara.run/api/period/setup/$_userId'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('https://couple-api.liara.run/api/period/setup/$userId'),
+        headers: {'Authorization': 'Bearer $token'},
       );
+      print('🔵 loadFromServer RESPONSE: ${response.statusCode}');
+      print('🔵 BODY: ${response.body}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _isSetupDone = data['isSetupDone'] ?? false;
@@ -395,16 +401,17 @@ class PeriodProvider extends ChangeNotifier {
                 int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
           }
         }
+        notifyListeners();
       }
     } catch (e) {
-      debugPrint('❌ Error loading period: $e');
+      debugPrint('❌ loadFromServer error: $e');
     }
-    notifyListeners();
   }
 
   // 🔥 ذخیره تنظیمات روی سرور
   Future<void> saveToServer() async {
-    // 🔥 این ۳ خط رو اول saveToServer اضافه کن
+    print(
+        '🔴 saveToServer CALLED. _userId: $_userId, _token: ${_token != null ? "YES" : "NO"}, _lastPeriodStart: $_lastPeriodStart');
     if (_token == null || _token!.isEmpty) {
       _token = ApiService.token;
     }
@@ -426,6 +433,7 @@ class PeriodProvider extends ChangeNotifier {
         'cycleLength': _cycleLength,
         'periodLength': _periodLength,
       });
+      print('🔴 BODY SENT: $body');
 
       final response = await http.post(
         Uri.parse('https://couple-api.liara.run/api/period/setup'),

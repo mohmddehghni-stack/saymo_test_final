@@ -38,6 +38,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isAppInForeground = true;
   bool _isMenuOpen = false;
 
+  String _activeTab = 'home';
+
   @override
   void initState() {
     super.initState();
@@ -45,17 +47,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     final appProvider = context.read<AppProvider>();
 
-    // ۱. اگه پارتنر از قبل توی SharedPreferences بوده، فوراً داده‌هاش رو بگیر
+    // اگر پارتنر از قبل هست، داده‌هایش را بعد از ساخت صفحه لود کن
     if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
-      context.read<PeriodProvider>().loadPartnerData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<PeriodProvider>().loadPartnerData();
+          context.read<MomentProvider>().loadMoments();
+        }
+      });
     }
 
-    // ۲. فقط یک Listener برای همه‌ی تغییرات
+    // یک Listener برای وقتی که partnerId تغییر کرد
     appProvider.addListener(() {
       if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
+        // اینجا از callback استفاده نکن، چون Listener بعد از build اجرا میشه
         context.read<PeriodProvider>().loadPartnerData();
-        _connectToSocket(); // سوکت رو به اتاق couple_ تغییر بده
-        _stopSmartTimer(); // تایمر دیگه لازم نیست
+        context.read<MomentProvider>().loadMoments();
+        _connectToSocket();
+        _stopSmartTimer();
       }
     });
 
@@ -70,8 +79,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _isAppInForeground = true;
       _tryPullPartner();
       _startSmartTimer();
-      // 🔥 وقتی برنامه دوباره باز شد، لحظه‌ها رو به‌روز کن
-      context.read<MomentProvider>().loadMoments();
+      context.read<MomentProvider>().loadMoments(); // 🔥 برگشت از بک‌گراند
+      context.read<PeriodProvider>().loadPartnerData(); // 🔥 داده‌های پریود هم
     } else if (state == AppLifecycleState.paused) {
       _isAppInForeground = false;
       _stopSmartTimer();
@@ -161,6 +170,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
 
     SocketService.connect(token: token, roomId: roomId);
+
+    // 🔥 بعد از اتصال، لحظه‌ها را بارگیری کن (با callback)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<MomentProvider>().loadMoments();
+        });
+      }
+    });
 
     SocketService.onMessage = (data) {
       if (data['action'] == 'incoming_invitation') _showInvitationDialog(data);
@@ -315,7 +333,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               bottom: 0,
               left: 0,
               right: 0,
-              child: buildBottomNav(context, activePage: 'home'),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  buildBottomNav(context, activePage: 'home'),
+                  const Positioned(
+                    bottom: 80, // ارتفاع FAB
+                    right: 16,
+                    child: _CinemaFAB(),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -8,6 +8,7 @@ Widget buildBottomNav(
   BuildContext context, {
   String activePage = 'home',
 }) {
+  if (activePage == 'notes') return const SizedBox.shrink();
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
     child: Container(
