@@ -339,7 +339,7 @@ class CalendarContent extends StatelessWidget {
     });
 
     // ۲. روزهای پریود
-    for (final date in periodDates) {
+    /*for (final date in periodDates) {
       events.add(EventData(
         icon: '🌸',
         text: '${cp.formatDate(date.day)} - روز پریود',
@@ -347,7 +347,7 @@ class CalendarContent extends StatelessWidget {
         color: const Color(0xFFF5576C),
         date: date,
       ));
-    }
+    }*/
 
     // ۳. لحظه‌ها
     try {

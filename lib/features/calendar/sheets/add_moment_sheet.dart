@@ -9,6 +9,8 @@ import 'package:flutter_application_1/features/calendar/data/preset_moments.dart
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_application_1/shared/services/notification_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AddMomentSheet {
   static const Color primaryPink = AppColors.primary;
@@ -45,6 +47,7 @@ class AddMomentSheet {
     Jalali selectedDate = Jalali.now();
     bool isRecurring = false;
     bool isPrivate = false;
+    TimeOfDay? selectedTime;
 
     showModalBottomSheet(
       context: context,
@@ -444,6 +447,46 @@ class AddMomentSheet {
                         activeColor: primaryPink)
                   ]),
                   const SizedBox(height: 20),
+                  // 🔥 انتخاب زمان
+                  InkWell(
+                    onTap: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime:
+                            selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
+                        builder: (context, child) => Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: MediaQuery(
+                            data: MediaQuery.of(context)
+                                .copyWith(alwaysUse24HourFormat: true),
+                            child: child!,
+                          ),
+                        ),
+                      );
+                      if (time != null)
+                        setSheetState(() => selectedTime = time);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.access_time,
+                            size: 18, color: Color(0xFF8E8E98)),
+                        const SizedBox(width: 10),
+                        Text(
+                          selectedTime != null
+                              ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+                              : 'انتخاب زمان (اختیاری)',
+                          style: const TextStyle(
+                              fontSize: 14, color: Color(0xFF1A1A2E)),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // دکمه ثبت
                   SizedBox(
@@ -452,42 +495,47 @@ class AddMomentSheet {
                     child: ElevatedButton(
                       onPressed: () async {
                         final mp = context.read<MomentProvider>();
-                        if (!mp.isInitialized) {
-                          final appProvider = context.read<AppProvider>();
-                          if (appProvider.userId != null &&
-                              appProvider.partnerId != null &&
-                              appProvider.partnerId!.isNotEmpty) {
-                            mp.init(); // دیگر userId و partnerId نمی‌خواهد
-                          } else {
-                            final prefs = await SharedPreferences.getInstance();
-                            final partnerId = prefs.getString('partnerId');
-                            if (partnerId != null && partnerId.isNotEmpty) {
-                              mp.init();
-                            } else {
-                              return;
-                            }
-                          }
-                        }
+                        // 🔥 همیشه init کن (حتی اگر isInitialized باشه، init دوباره ضرری نداره)
+                        mp.init();
+
+                        // یک لحظه صبر کن تا coupleId لود بشه (اختیاری ولی مفید)
+                        await Future.delayed(const Duration(milliseconds: 300));
 
                         if (selectedCategory == 'milestone' &&
                             _selectedTitles.isNotEmpty) {
                           for (final title in _selectedTitles) {
                             final preset = PresetMoments.milestones
                                 .firstWhere((p) => p['title'] == title);
-                            await mp.addMoment(
+                            final momentId = await mp.addMoment(
                               title: title,
                               date: selectedDate,
                               startDate: Jalali.now(),
-                              category: selectedCategory, // string
+                              category: selectedCategory,
                               emoji: preset['emoji'] ?? '💎',
                               isRecurring: isRecurring,
                               isPrivate: isPrivate,
+                              reminderTime: selectedTime,
                             );
+                            if (selectedTime != null && momentId != null) {
+                              final scheduledDate = DateTime(
+                                selectedDate.year,
+                                selectedDate.month,
+                                selectedDate.day,
+                                selectedTime!.hour,
+                                selectedTime!.minute,
+                              );
+                              NotificationService.scheduleMomentNotification(
+                                id: momentId,
+                                title: title,
+                                body: '${preset['emoji']} $title',
+                                scheduledDate: scheduledDate,
+                              );
+                            }
                           }
                           Navigator.pop(ctx);
                           HapticFeedback.mediumImpact();
                         } else if (titleController.text.trim().isNotEmpty) {
-                          await mp.addMoment(
+                          final momentId = await mp.addMoment(
                             title: titleController.text.trim(),
                             date: selectedDate,
                             startDate: Jalali.now(),
@@ -496,6 +544,22 @@ class AddMomentSheet {
                             isRecurring: isRecurring,
                             isPrivate: isPrivate,
                           );
+                          if (selectedTime != null && momentId != null) {
+                            final scheduledDate = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              selectedTime!.hour,
+                              selectedTime!.minute,
+                            );
+                            NotificationService.scheduleMomentNotification(
+                              id: momentId,
+                              title: titleController.text.trim(),
+                              body:
+                                  '$selectedEmoji ${titleController.text.trim()}',
+                              scheduledDate: scheduledDate,
+                            );
+                          }
                           Navigator.pop(ctx);
                           HapticFeedback.mediumImpact();
                         }

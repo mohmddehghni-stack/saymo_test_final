@@ -195,4 +195,47 @@ class ApiService {
     final data = jsonDecode(response.body);
     return data['notes'] ?? [];
   }
+
+  // ارسال کد OTP
+  static Future<Map<String, dynamic>> sendOTP(String phone) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/send-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'phone': phone}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // تایید کد OTP
+  static Future<Map<String, dynamic>> verifyOTP(
+      String phone, String code) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/verify-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'phone': phone, 'code': code}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// ورود با OTP (برای کاربران قدیمی)
+  static Future<Map<String, dynamic>> loginWithOTP(
+      String phone, String code) async {
+    // ابتدا کد را تایید می‌کنیم
+    final verifyResult = await verifyOTP(phone, code);
+    if (verifyResult['message'] == null) {
+      return verifyResult; // خطا برگشت
+    }
+
+    // حالا چون کاربر قدیمی است، با رمز پیش‌فرض لاگین می‌کنیم
+    // (چون ثبت‌نام قبلی با رمز ساده انجام شده بود)
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'phone': phone,
+        'password': '123456', // رمز پیش‌فرض که توی ثبت‌نام استفاده کردیم
+      }),
+    );
+    return jsonDecode(response.body);
+  }
 }

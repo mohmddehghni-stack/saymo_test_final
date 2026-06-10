@@ -198,7 +198,7 @@ class _CalendarPageState extends State<CalendarPage>
       });
 
       // ۲. رویدادهای پریود
-      if (isFemale) {
+      /*if (isFemale) {
         if (pp.lastPeriodStart != null) {
           final periodDates =
               pp.getPeriodDatesForMonth(cp.selectedMonth, cp.selectedYear);
@@ -250,7 +250,7 @@ class _CalendarPageState extends State<CalendarPage>
             ));
           }
         }
-      }
+      }*/
 
       // ۳. لحظه‌ها
       for (final moment in mp.moments) {

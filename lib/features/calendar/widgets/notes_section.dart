@@ -17,13 +17,33 @@ class NotesSection extends StatelessWidget {
   static const Color textGrey = Color(0xFF8E8E98);
   static const Color partnerBlue = Color(0xFF5B8DEF);
 
+  static const List<String> _monthNames = [
+    '',
+    'فروردین',
+    'اردیبهشت',
+    'خرداد',
+    'تیر',
+    'مرداد',
+    'شهریور',
+    'مهر',
+    'آبان',
+    'آذر',
+    'دی',
+    'بهمن',
+    'اسفند',
+  ];
+
   @override
   Widget build(BuildContext context) {
     if (cp.isLoading) return _buildShimmerNotes();
 
-    final allNoteDays = cp.sortedNoteDays;
+    // 🔥 از تمام یادداشت‌های ثبت‌شده (همه ماه‌ها) استفاده کن
+    final allNotes = cp.savedNotesWithFullKey;
+    if (allNotes.isEmpty) return _buildEmptyState();
 
-    if (allNoteDays.isEmpty) return _buildEmptyState();
+    // 🔥 کلیدها را بر اساس تاریخ (جدیدترین اول) مرتب می‌کنیم
+    final sortedKeys = allNotes.keys.toList()
+      ..sort((a, b) => b.compareTo(a)); // کلیدها به فرمت YYYY-MM-DD هستند
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -49,18 +69,34 @@ class NotesSection extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${allNoteDays.length} خاطره',
+                '${sortedKeys.length} خاطره',
                 style: TextStyle(fontSize: 11, color: textGrey),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          ...allNoteDays.map((day) {
-            final dayNotes = cp.savedNotes[day];
-            if (dayNotes == null) return const SizedBox.shrink();
+          ...sortedKeys.map((key) {
+            final dayNotes = allNotes[key];
+            if (dayNotes == null || dayNotes.isEmpty)
+              return const SizedBox.shrink();
+
+            // 🔥 استخراج تاریخ شمسی از کلید (مثلاً ۱۴۰۵-۰۳-۱۹)
+            String dateStr = '';
+            int? day;
+            try {
+              final parts = key.split('-');
+              if (parts.length == 3) {
+                final y = int.parse(parts[0]);
+                final m = int.parse(parts[1]);
+                final d = int.parse(parts[2]);
+                dateStr = '$d ${_monthNames[m]} $y';
+                day = d;
+              }
+            } catch (_) {
+              return const SizedBox.shrink();
+            }
 
             final isSelected = day == cp.selectedDay;
-            final dateStr = cp.formatDate(day);
 
             return Column(
               children: [
@@ -70,15 +106,15 @@ class NotesSection extends StatelessWidget {
                     note: dayNotes[cp.userId!]!['note']?.toString() ?? '',
                     isMyNote: true,
                     isSelected: isSelected,
-                    day: day,
+                    day: day ?? 0,
                     onTap: () => EditNoteSheet.show(
                       context,
                       cp: cp,
-                      day: day,
+                      day: day ?? 0,
                       currentNote:
                           dayNotes[cp.userId!]!['note']?.toString() ?? '',
                     ),
-                    onLongPress: () => _showDeleteDialog(context, cp, day),
+                    onLongPress: () => _showDeleteDialog(context, cp, day ?? 0),
                   ),
                 if (dayNotes.containsKey(cp.partnerId))
                   _buildNoteCard(
@@ -86,7 +122,7 @@ class NotesSection extends StatelessWidget {
                     note: dayNotes[cp.partnerId!]!['note']?.toString() ?? '',
                     isMyNote: false,
                     isSelected: isSelected,
-                    day: day,
+                    day: day ?? 0,
                     onTap: () => NoteDetailDialog.show(
                       context,
                       dateStr: dateStr,

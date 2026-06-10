@@ -77,8 +77,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _isAppInForeground = true;
       _tryPullPartner();
       _startSmartTimer();
-      context.read<MomentProvider>().loadMoments(); // 🔥 برگشت از بک‌گراند
-      context.read<PeriodProvider>().loadPartnerData(); // 🔥 داده‌های پریود هم
+
+      // 🔥 با کمی تأخیر، تا UI آماده بشه
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<MomentProvider>().loadMoments();
+          context.read<PeriodProvider>().loadPartnerData();
+        }
+      });
     } else if (state == AppLifecycleState.paused) {
       _isAppInForeground = false;
       _stopSmartTimer();

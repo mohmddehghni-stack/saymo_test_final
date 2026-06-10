@@ -19,6 +19,7 @@ class Moment {
   final String? status;
   final Jalali? startDate;
   final bool autoDelete;
+  final TimeOfDay? reminderTime;
 
   Moment({
     this.id,
@@ -34,6 +35,7 @@ class Moment {
     this.status,
     this.startDate,
     this.autoDelete = false,
+    this.reminderTime,
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,18 @@ class Moment {
         json['moment_date_jalali']?.toString() ??
         '';
     final dateParts = dateStr.split('-');
+
+    TimeOfDay? reminderTime;
+    if (json['reminder_time'] != null &&
+        json['reminder_time'].toString().isNotEmpty) {
+      final parts = json['reminder_time'].toString().split(':');
+      if (parts.length >= 2) {
+        reminderTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 0,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+    }
 
     return Moment(
       id: json['id'],
@@ -61,6 +75,7 @@ class Moment {
       startDate:
           json['start_date'] != null ? _parseDate(json['start_date']) : null,
       autoDelete: json['auto_delete'] == true,
+      reminderTime: reminderTime,
     );
   }
 
@@ -101,12 +116,14 @@ class MomentProvider extends ChangeNotifier {
   List<Moment> get upcoming {
     final now = Jalali.now();
     final list = _moments.where((m) {
-      if (m.status == 'passed') return false;
+      // اگر تاریخش >= امروز باشه، همیشه نشون بده (حتی اگر passed باشه)
       if (m.date.year > now.year) return true;
       if (m.date.year == now.year && m.date.month > now.month) return true;
       if (m.date.year == now.year &&
           m.date.month == now.month &&
           m.date.day >= now.day) return true;
+      // اگه تاریخ گذشته ولی هنوز active هست (طبیعی)
+      if (m.status == 'active') return true;
       return false;
     }).toList();
 
@@ -133,7 +150,14 @@ class MomentProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoments() async {
-    if (ApiService.coupleId == null) return;
+    if (ApiService.coupleId == null) {
+      // 🔥 اگر coupleId هنوز آماده نیست، ۲ ثانیه صبر کن و دوباره تلاش کن
+      Future.delayed(const Duration(seconds: 2), () {
+        if (ApiService.coupleId != null) loadMoments();
+      });
+      return;
+    }
+
     _isLoading = true;
     notifyListeners();
 
@@ -161,7 +185,7 @@ class MomentProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addMoment({
+  Future<int?> addMoment({
     required String title,
     required Jalali date,
     Jalali? startDate,
@@ -169,14 +193,15 @@ class MomentProvider extends ChangeNotifier {
     String emoji = '🎉',
     bool isRecurring = false,
     bool isPrivate = false,
+    TimeOfDay? reminderTime,
   }) async {
     final coupleId = ApiService.coupleId;
-    if (coupleId == null) return;
+    if (coupleId == null) return null;
 
     final momentDateJalali =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final momentDateGregorian =
-        date.toDateTime().toIso8601String().split('T')[0]; // YYYY-MM-DD
+        date.toDateTime().toIso8601String().split('T')[0];
 
     String? startDateJalali, startDateGregorian;
     if (startDate != null) {
@@ -197,6 +222,9 @@ class MomentProvider extends ChangeNotifier {
       'isRecurring': isRecurring,
       'isPrivate': isPrivate,
       'couple_id': coupleId,
+      'reminderTime': reminderTime != null
+          ? '${reminderTime.hour.toString().padLeft(2, '0')}:${reminderTime.minute.toString().padLeft(2, '0')}:00'
+          : null,
     });
 
     try {
@@ -207,7 +235,10 @@ class MomentProvider extends ChangeNotifier {
       });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
         await loadMoments();
+        // 🔥 id مومنت جدید رو برگردون
+        return data['moment']?['id'];
       } else {
         throw Exception('Server returned ${response.statusCode}');
       }
@@ -215,6 +246,7 @@ class MomentProvider extends ChangeNotifier {
       debugPrint('❌ Error saving moment: $e');
       _errorMessage = 'خطا در ذخیره لحظه';
       notifyListeners();
+      return null;
     }
   }
 
@@ -225,6 +257,7 @@ class MomentProvider extends ChangeNotifier {
     String category = 'appointment',
     String emoji = '🎉',
     bool isRecurring = false,
+    TimeOfDay? reminderTime,
   }) async {
     final momentDateJalali =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -241,6 +274,9 @@ class MomentProvider extends ChangeNotifier {
             'category': category,
             'emoji': emoji,
             'isRecurring': isRecurring,
+            'reminderTime': reminderTime != null
+                ? '${reminderTime.hour.toString().padLeft(2, '0')}:${reminderTime.minute.toString().padLeft(2, '0')}:00'
+                : null,
           }),
           headers: {
             'Content-Type': 'application/json',
