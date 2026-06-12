@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'package:flutter_application_1/features/home/widgets/dashed_border_painter.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class DayCell extends StatelessWidget {
   final int? day;
@@ -50,16 +50,26 @@ class DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     if (day == null) return const SizedBox();
 
+    // 🔥 گرفتن تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ پایهٔ متن (در روشن مشکی، در تاریک سفید)
+    final Color baseTextColor = appTheme?.textPrimary ?? Colors.black;
+    // رنگ روزهای عادی (در روشن ۸۰٪ opacity، در تاریک کامل)
+    final Color normalColor = baseTextColor.withOpacity(isDark ? 1.0 : 0.8);
+    // رنگ روزهای گذشته (در روشن ۳۵٪، در تاریک ۴۰٪)
+    final Color pastColor = baseTextColor.withOpacity(isDark ? 0.4 : 0.35);
+
     Color textColor = isActive
         ? Colors.white
         : isPast
-            ? Colors.black.withOpacity(0.35)
-            : Colors.black.withOpacity(0.8);
+            ? pastColor
+            : normalColor;
 
     // ─── محاسبه گوشه‌های هایلایت ───
     BorderRadiusGeometry borderRadius;
     if (hasPeriod || hasFertile || hasPredictedPeriod) {
-      // ─── اول یا آخر بودن رو چک کن ───
       final isFirst = periodIsFirst || fertileIsFirst || predictedIsFirst;
       final isLast = periodIsLast || fertileIsLast || predictedIsLast;
 
@@ -76,7 +86,7 @@ class DayCell extends StatelessWidget {
           bottomLeft: Radius.circular(20),
         );
       } else {
-        borderRadius = BorderRadius.zero; // 👈 وسط: کاملاً صاف
+        borderRadius = BorderRadius.zero;
       }
     } else {
       borderRadius = BorderRadius.circular(8);
@@ -94,8 +104,8 @@ class DayCell extends StatelessWidget {
               child: CustomPaint(
                 painter: DashedBorderPainter(
                   color: const Color(0xFFFFB6C1).withOpacity(0.5),
-                  isFirst: predictedIsLast, // 👈 اونی که LAST بود رو بذار FIRST
-                  isLast: predictedIsFirst, // 👈 اونی که FIRST بود رو بذار LAST
+                  isFirst: predictedIsLast,
+                  isLast: predictedIsFirst,
                 ),
               ),
             ),
@@ -126,7 +136,6 @@ class DayCell extends StatelessWidget {
             ),
 
           // ─── عدد روز ───
-          // ─── عدد روز ───
           Center(
             child: Container(
               width: 30,
@@ -137,8 +146,7 @@ class DayCell extends StatelessWidget {
                   color: isActive && !isToday
                       ? AppColors.primaryDark
                       : isOvulationDay
-                          ? Colors.deepPurple
-                              .withOpacity(0.5) // 👈 حلقه بنفش برای تخمک‌گذاری
+                          ? Colors.deepPurple.withOpacity(0.5)
                           : Colors.transparent,
                   width: isActive || isOvulationDay ? 2.5 : 0.8,
                 ),
@@ -161,8 +169,7 @@ class DayCell extends StatelessWidget {
                   color: isActive
                       ? (isToday ? Colors.white : AppColors.primaryDark)
                       : isOvulationDay
-                          ? Colors.deepPurple
-                              .withOpacity(0.7) // 👈 عدد بنفش برای تخمک‌گذاری
+                          ? Colors.deepPurple.withOpacity(0.7)
                           : textColor,
                   fontSize: 12,
                   fontFamily: 'Vazir',
@@ -173,14 +180,12 @@ class DayCell extends StatelessWidget {
           ),
 
           // ─── نقطه‌های یادداشت و لحظه (زیر عدد) ───
-          // ─── نقطه‌های یادداشت و لحظه (زیر عدد) ───
           if (hasNote || hasMoment)
             Positioned(
               bottom: 1,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 🔥 نقطه یادداشت خودم
                   if (isMyNote)
                     Container(
                       width: 5,
@@ -191,7 +196,6 @@ class DayCell extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                  // 🔥 نقطه یادداشت پارتنر
                   if (isPartnerNote)
                     Container(
                       width: 5,
@@ -202,7 +206,6 @@ class DayCell extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                  // 🔥 نقطه moment
                   if (hasMoment)
                     Container(
                       width: 5,
@@ -228,13 +231,14 @@ class WeekDayLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     return SizedBox(
       width: 28,
       child: Center(
         child: Text(
           label,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: appTheme?.textPrimary ?? Colors.black,
             fontSize: 12,
             fontFamily: 'Vazir',
             fontWeight: FontWeight.bold,

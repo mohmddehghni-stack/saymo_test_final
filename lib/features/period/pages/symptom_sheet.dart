@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/period_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 void showSymptomSheet(
   BuildContext context, {
@@ -24,13 +25,31 @@ void showSymptomSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    backgroundColor: Colors.transparent, // 👈 برای پس‌زمینه گرد
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (context) {
+      // 🔥 گرفتن تم
+      final appTheme = Theme.of(context).extension<AppTheme>();
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+
+      // رنگ‌های پویا
+      final Color bgColor = appTheme?.cardBackground ?? Colors.white;
+      final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+      final Color hintColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
+      final Color chipBg = isDark
+          ? Colors.grey.shade800
+          : Colors.grey.shade100; // پس‌زمینه چیپ‌های انتخاب‌نشده
+
       return StatefulBuilder(
         builder: (context, setSheetState) {
-          return Padding(
+          return Container(
+            decoration: BoxDecoration(
+              color: bgColor, // 👈 پس‌زمینه اصلی
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -44,22 +63,22 @@ void showSymptomSheet(
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   '✨ ثبت حال امروز',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5D4037),
+                    color: textColor, // 👈
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'چقدر درد داری؟',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 15,
-                    color: Color(0xFF5D4037),
+                    color: textColor, // 👈
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -112,12 +131,12 @@ void showSymptomSheet(
                   }),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'چه علائمی داری؟',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 15,
-                    color: Color(0xFF5D4037),
+                    color: textColor, // 👈
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -144,8 +163,8 @@ void showSymptomSheet(
                         ),
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.primaryDark.withValues(alpha: 0.15)
-                              : Colors.grey.shade100,
+                              ? AppColors.primaryDark.withOpacity(0.15)
+                              : chipBg, // 👈
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: selected
@@ -160,7 +179,7 @@ void showSymptomSheet(
                             fontSize: 13,
                             color: selected
                                 ? AppColors.primaryDark
-                                : Colors.black54,
+                                : hintColor, // 👈
                           ),
                         ),
                       ),
@@ -190,15 +209,15 @@ void showSymptomSheet(
                             '😖',
                             '😫',
                             '😵'
-                          ][painLevel], // 🔥 ۶ تا
+                          ][painLevel],
                           'symptoms': List.from(symptoms),
                           'date': 'همین الان',
                         });
                       }
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('✅ ثبت شد!',
+                        SnackBar(
+                          content: const Text('✅ ثبت شد!',
                               style: TextStyle(fontFamily: 'Vazir')),
                           backgroundColor: AppColors.primaryDark,
                           behavior: SnackBarBehavior.floating,

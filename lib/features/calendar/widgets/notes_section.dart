@@ -3,7 +3,7 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/calendar_provider.dart';
 import '../sheets/edit_note_sheet.dart';
 import '../sheets/note_detail_dialog.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class NotesSection extends StatelessWidget {
   final CalendarProvider cp;
@@ -12,9 +12,6 @@ class NotesSection extends StatelessWidget {
 
   static const Color primaryPink = AppColors.primary;
   static const Color deepPink = Color(0xFFE8456B);
-  static const Color cardBg = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF1A1A2E);
-  static const Color textGrey = Color(0xFF8E8E98);
   static const Color partnerBlue = Color(0xFF5B8DEF);
 
   static const List<String> _monthNames = [
@@ -35,15 +32,16 @@ class NotesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (cp.isLoading) return _buildShimmerNotes();
+    // 🔥 گرفتن تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 🔥 از تمام یادداشت‌های ثبت‌شده (همه ماه‌ها) استفاده کن
+    if (cp.isLoading) return _buildShimmerNotes(isDark);
+
     final allNotes = cp.savedNotesWithFullKey;
-    if (allNotes.isEmpty) return _buildEmptyState();
+    if (allNotes.isEmpty) return _buildEmptyState(appTheme, isDark);
 
-    // 🔥 کلیدها را بر اساس تاریخ (جدیدترین اول) مرتب می‌کنیم
-    final sortedKeys = allNotes.keys.toList()
-      ..sort((a, b) => b.compareTo(a)); // کلیدها به فرمت YYYY-MM-DD هستند
+    final sortedKeys = allNotes.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -62,15 +60,21 @@ class NotesSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'خاطرات',
+              Text(
+                'یادداشت',
                 style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700, color: textDark),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: appTheme?.textPrimary ?? const Color(0xFF1A1A2E), // 👈
+                ),
               ),
               const Spacer(),
               Text(
-                '${sortedKeys.length} خاطره',
-                style: TextStyle(fontSize: 11, color: textGrey),
+                '${sortedKeys.length} یادداشت',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: appTheme?.textHint ?? const Color(0xFF8E8E98), // 👈
+                ),
               ),
             ],
           ),
@@ -80,7 +84,6 @@ class NotesSection extends StatelessWidget {
             if (dayNotes == null || dayNotes.isEmpty)
               return const SizedBox.shrink();
 
-            // 🔥 استخراج تاریخ شمسی از کلید (مثلاً ۱۴۰۵-۰۳-۱۹)
             String dateStr = '';
             int? day;
             try {
@@ -102,6 +105,7 @@ class NotesSection extends StatelessWidget {
               children: [
                 if (dayNotes.containsKey(cp.userId))
                   _buildNoteCard(
+                    context,
                     dateStr: dateStr,
                     note: dayNotes[cp.userId!]!['note']?.toString() ?? '',
                     isMyNote: true,
@@ -118,6 +122,7 @@ class NotesSection extends StatelessWidget {
                   ),
                 if (dayNotes.containsKey(cp.partnerId))
                   _buildNoteCard(
+                    context,
                     dateStr: dateStr,
                     note: dayNotes[cp.partnerId!]!['note']?.toString() ?? '',
                     isMyNote: false,
@@ -139,7 +144,8 @@ class NotesSection extends StatelessWidget {
     );
   }
 
-  Widget _buildNoteCard({
+  Widget _buildNoteCard(
+    BuildContext context, {
     required String dateStr,
     required String note,
     required bool isMyNote,
@@ -148,7 +154,13 @@ class NotesSection extends StatelessWidget {
     required VoidCallback onTap,
     VoidCallback? onLongPress,
   }) {
-    final color = isMyNote ? primaryPink : partnerBlue;
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color color = isMyNote ? primaryPink : partnerBlue;
+    final Color bgColor = appTheme?.cardBackground ?? const Color(0xFFFFFFFF);
+    final Color mainTextColor =
+        appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color subTextColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
 
     return GestureDetector(
       onTap: onTap,
@@ -158,7 +170,7 @@ class NotesSection extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBg,
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -217,19 +229,19 @@ class NotesSection extends StatelessWidget {
                         height: 3,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: textGrey.withOpacity(0.4),
+                          color: subTextColor.withOpacity(0.4),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         dateStr,
                         style: TextStyle(
-                            fontSize: isSelected ? 10 : 9, color: textGrey),
+                            fontSize: isSelected ? 10 : 9, color: subTextColor),
                       ),
                       const Spacer(),
                       if (isMyNote)
                         Icon(Icons.edit_rounded,
-                            size: 14, color: textGrey.withOpacity(0.4)),
+                            size: 14, color: subTextColor.withOpacity(0.4)),
                     ],
                   ),
                   const SizedBox(height: 5),
@@ -237,7 +249,7 @@ class NotesSection extends StatelessWidget {
                     note,
                     style: TextStyle(
                       fontSize: isSelected ? 13 : 11.5,
-                      color: isSelected ? textDark : textGrey,
+                      color: isSelected ? mainTextColor : subTextColor,
                       height: 1.35,
                     ),
                     maxLines: isSelected ? 3 : 1,
@@ -252,7 +264,7 @@ class NotesSection extends StatelessWidget {
     );
   }
 
-  Widget _buildShimmerNotes() {
+  Widget _buildShimmerNotes(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -265,7 +277,7 @@ class NotesSection extends StatelessWidget {
                 height: 18,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
-                  color: Colors.grey.shade300,
+                  color: isDark ? Colors.white10 : Colors.grey.shade300,
                 ),
               ),
               const SizedBox(width: 8),
@@ -273,7 +285,7 @@ class NotesSection extends StatelessWidget {
                 width: 100,
                 height: 16,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -285,7 +297,7 @@ class NotesSection extends StatelessWidget {
               height: 72,
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: isDark ? Colors.white10 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -295,7 +307,8 @@ class NotesSection extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppTheme? appTheme, bool isDark) {
+    final subTextColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
     return Column(
       children: [
         const SizedBox(height: 30),
@@ -318,12 +331,12 @@ class NotesSection extends StatelessWidget {
         Text(
           'هنوز خاطره‌ای ثبت نشده',
           style: TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w500, color: textGrey),
+              fontSize: 14, fontWeight: FontWeight.w500, color: subTextColor),
         ),
         const SizedBox(height: 4),
         Text(
           'با + یه خاطره قشنگ ثبت کن ✨',
-          style: TextStyle(fontSize: 12, color: textGrey.withOpacity(0.6)),
+          style: TextStyle(fontSize: 12, color: subTextColor.withOpacity(0.6)),
         ),
       ],
     );
@@ -332,42 +345,54 @@ class NotesSection extends StatelessWidget {
   void _showDeleteDialog(BuildContext context, CalendarProvider cp, int day) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.delete_outline, color: deepPink, size: 24),
-            SizedBox(width: 8),
-            Text('حذف خاطره',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          'این خاطره برای همیشه حذف میشه. مطمئنی؟',
-          style: TextStyle(fontSize: 13, color: textGrey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('بیخیال',
-                style: TextStyle(color: textGrey, fontSize: 13)),
+      builder: (ctx) {
+        final appTheme = Theme.of(context).extension<AppTheme>();
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: appTheme?.cardBackground ?? Colors.white,
+          title: Row(
+            children: [
+              const Icon(Icons.delete_outline, color: deepPink, size: 24),
+              const SizedBox(width: 8),
+              Text('حذف خاطره',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: appTheme?.textPrimary ?? const Color(0xFF1A1A2E))),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              cp.deleteNote(day);
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: deepPink,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+          content: Text(
+            'این یادداشت برای همیشه حذف میشه. مطمئنی؟',
+            style: TextStyle(
+                fontSize: 13,
+                color: appTheme?.textHint ?? const Color(0xFF8E8E98)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('بیخیال',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: appTheme?.textHint ?? const Color(0xFF8E8E98))),
             ),
-            child: const Text('آره، حذف کن',
-                style: TextStyle(color: Colors.white, fontSize: 13)),
-          ),
-        ],
-      ),
+            ElevatedButton(
+              onPressed: () {
+                cp.deleteNote(day);
+                Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: deepPink,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('آره، حذف کن',
+                  style: TextStyle(color: Colors.white, fontSize: 13)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

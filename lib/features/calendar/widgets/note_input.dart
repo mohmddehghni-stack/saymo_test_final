@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import '../../../../core/providers/calendar_provider.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class NoteInput extends StatefulWidget {
   final int selectedDay;
@@ -47,17 +47,35 @@ class _NoteInputState extends State<NoteInput> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 گرفتن تم و وضعیت
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های تطبیق‌یافته
+    final Color bgColor = isDark
+        ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+        : Colors.white;
+    final Color textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final Color hintColor = textColor.withOpacity(0.4);
+    final Color borderColor =
+        isDark ? Colors.white.withOpacity(0.15) : const Color(0xFFEAEAEA);
+    final Color inputBg =
+        isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF5F5F5);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2))
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -68,11 +86,12 @@ class _NoteInputState extends State<NoteInput> {
               const Text('📝', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text('یادداشت روز ${widget.selectedDay}',
-                  style: const TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 13,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                    fontFamily: 'Vazir',
+                    fontSize: 13,
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  )),
               const Spacer(),
               Container(
                 padding:
@@ -99,26 +118,24 @@ class _NoteInputState extends State<NoteInput> {
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: inputBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+              border: Border.all(color: borderColor.withOpacity(0.8)),
             ),
             child: TextField(
               controller: _controller,
               textDirection: TextDirection.rtl,
               minLines: 3,
               maxLines: 5,
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 13,
-                  color: Colors.white,
+                  color: textColor,
                   height: 1.6),
               decoration: InputDecoration(
                 hintText: 'اینجا بنویس... ✍️',
                 hintStyle: TextStyle(
-                    fontFamily: 'Vazir',
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.4)),
+                    fontFamily: 'Vazir', fontSize: 13, color: hintColor),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.all(14),
               ),
@@ -133,7 +150,7 @@ class _NoteInputState extends State<NoteInput> {
                       fontSize: 10,
                       color: _controller.text.length > 450
                           ? Colors.orange
-                          : Colors.white.withOpacity(0.4))),
+                          : textColor.withOpacity(0.4))),
               const Spacer(),
               GestureDetector(
                 onTap: _saveNote,

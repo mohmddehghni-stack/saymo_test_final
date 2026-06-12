@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'dashed_border_painter.dart';
 import '../../calendar/pages/calendar_page.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class CalendarCapsule extends StatelessWidget {
   final String title;
@@ -19,6 +20,8 @@ class CalendarCapsule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -33,7 +36,9 @@ class CalendarCapsule extends StatelessWidget {
             width: 42,
             height: 72,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.surfacePrimary,
+              color: isSelected
+                  ? AppColors.primary
+                  : (appTheme?.cardBackground ?? AppColors.surfacePrimary),
               borderRadius: BorderRadius.circular(24),
               boxShadow: isSelected
                   ? [
@@ -46,7 +51,8 @@ class CalendarCapsule extends StatelessWidget {
                     ]
                   : [
                       BoxShadow(
-                        color: AppColors.shadowLight,
+                        color: (appTheme?.shadowColor ?? AppColors.shadowLight)
+                            .withOpacity(0.04), // شفافیت ملایم
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -62,7 +68,7 @@ class CalendarCapsule extends StatelessWidget {
                     fontFamily: 'Vazir',
                     color: isSelected
                         ? AppColors.textWhite
-                        : AppColors.textPrimary,
+                        : (appTheme?.textPrimary ?? AppColors.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -74,7 +80,7 @@ class CalendarCapsule extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: isSelected
                         ? AppColors.textWhite
-                        : AppColors.textPrimary,
+                        : (appTheme?.textPrimary ?? AppColors.textPrimary),
                   ),
                 ),
               ],

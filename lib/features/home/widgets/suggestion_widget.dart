@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/period_provider.dart';
 import 'package:flutter_application_1/core/providers/couple_cache_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class SuggestionWidget extends StatefulWidget {
   const SuggestionWidget({super.key});
@@ -76,6 +77,10 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 گرفتن تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final pp = context.watch<PeriodProvider>();
     final cache = context.watch<CoupleCacheProvider>();
 
@@ -117,7 +122,10 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.06), // 🔥 از قرمز به صورتی برند
+        // پس‌زمینه: در تم روشن صورتی خیلی کمرنگ، در تم تاریک سطح کارت
+        color: isDark
+            ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+            : AppColors.primary.withOpacity(0.06),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(16),
           bottomRight: Radius.circular(16),
@@ -144,10 +152,11 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
             child: Text(
               _currentSuggestion,
               textDirection: TextDirection.rtl,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontFamily: 'Vazir',
-                color: AppColors.textPrimary,
+                // متن: در تم روشن تیره، در تم تاریک روشن
+                color: appTheme?.textPrimary ?? AppColors.textPrimary,
                 height: 1.5,
               ),
             ),

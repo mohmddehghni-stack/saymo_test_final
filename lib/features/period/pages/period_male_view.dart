@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/cycle_painter.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class PeriodMaleView extends StatelessWidget {
   final int currentDay;
@@ -13,12 +14,20 @@ class PeriodMaleView extends StatelessWidget {
     required this.periodLength,
   });
 
-  // رنگ‌های برند جدید
   static const Color primaryPink = Color(0xFFFE4773);
   static const Color primaryPurple = Color(0xFF862AF5);
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color cardColor = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color hintColor = appTheme?.textHint ?? const Color(0xFF888888);
+
     String moodEmoji, statusText, careText, predictionText;
     Color accentColor;
 
@@ -28,7 +37,7 @@ class PeriodMaleView extends StatelessWidget {
       careText =
           'الان احتمالاً خسته‌ست و نیاز به استراحت داره. یه دوش آب گرم، یه ماساژ گردن، یا یه شاخه گل می‌تونه معجزه کنه 🌸';
       predictionText = '${cycleLength - currentDay} روز تا پایان این دوره';
-      accentColor = primaryPink; // صورتی
+      accentColor = primaryPink;
     } else if (currentDay <= 13) {
       moodEmoji = '😊';
       statusText = 'حالش خوبه!';
@@ -36,7 +45,7 @@ class PeriodMaleView extends StatelessWidget {
           'پر انرژی و سرحاله. بهترین وقت برای یه قرار عاشقونه، پیاده‌روی دونفره، یا برنامه‌ریزی آخر هفته‌ست ✨';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = primaryPurple; // بنفش
+      accentColor = primaryPurple;
     } else if (currentDay <= 16) {
       moodEmoji = '😍';
       statusText = 'روزای طلایی!';
@@ -44,7 +53,7 @@ class PeriodMaleView extends StatelessWidget {
           'اوج انرژی و اعتماد به نفسشه. بهترین وقت برای خرید، مهمونی، و کارای مهمه. بهش بگو چقدر خوشگله! 💕';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = primaryPink; // صورتی (انرژی)
+      accentColor = primaryPink;
     } else {
       moodEmoji = '😟';
       statusText = 'یه کم حساس شده...';
@@ -52,7 +61,7 @@ class PeriodMaleView extends StatelessWidget {
           'ممکنه یه کم حساس‌تر باشه. شکلات تلخ، غذای خونگی، یه فیلم خوب، و یه عالمه محبت بهترین داروهاست 🍫🎬';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = primaryPurple; // بنفش
+      accentColor = primaryPurple;
     }
 
     return SingleChildScrollView(
@@ -60,27 +69,28 @@ class PeriodMaleView extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 10),
-          _buildCircle(accentColor),
+          _buildCircle(accentColor, cardColor),
           const SizedBox(height: 16),
-          _buildStatusCard(moodEmoji, statusText, careText, accentColor),
+          _buildStatusCard(moodEmoji, statusText, careText, accentColor,
+              cardColor, textColor, hintColor),
           const SizedBox(height: 12),
-          _buildActivitySuggestions(accentColor),
+          _buildActivitySuggestions(accentColor, cardColor, hintColor),
           const SizedBox(height: 12),
-          _buildEmotionalTips(accentColor),
+          _buildEmotionalTips(accentColor, cardColor, hintColor),
           const SizedBox(height: 12),
-          _buildPredictionCard(predictionText, accentColor),
+          _buildPredictionCard(
+              predictionText, accentColor, cardColor, textColor, hintColor),
           const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // ===== ۱. دایره چرخه =====
-  Widget _buildCircle(Color accentColor) {
+  Widget _buildCircle(Color accentColor, Color cardColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor, // 👈 پویا
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -102,14 +112,13 @@ class PeriodMaleView extends StatelessWidget {
     );
   }
 
-  // ===== ۲. کارت وضعیت =====
-  Widget _buildStatusCard(
-      String emoji, String title, String text, Color accentColor) {
+  Widget _buildStatusCard(String emoji, String title, String text,
+      Color accentColor, Color cardColor, Color textColor, Color hintColor) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor, // 👈
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -134,17 +143,17 @@ class PeriodMaleView extends StatelessWidget {
         const SizedBox(height: 10),
         Text(text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontFamily: 'Vazir',
                 fontSize: 12.5,
-                color: Color(0xFF888888),
+                color: hintColor, // 👈
                 height: 1.6)),
       ]),
     );
   }
 
-  // ===== ۳. پیشنهاد فعالیت =====
-  Widget _buildActivitySuggestions(Color accentColor) {
+  Widget _buildActivitySuggestions(
+      Color accentColor, Color cardColor, Color hintColor) {
     List<Map<String, String>> activities;
     if (currentDay <= periodLength) {
       activities = [
@@ -169,7 +178,7 @@ class PeriodMaleView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor, // 👈
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -195,17 +204,17 @@ class PeriodMaleView extends StatelessWidget {
               Text(a['emoji']!, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 12),
               Text(a['text']!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 13,
-                      color: Color(0xFF666666)))
+                      color: hintColor)) // 👈
             ]))),
       ]),
     );
   }
 
-  // ===== ۴. نکات روانشناسی =====
-  Widget _buildEmotionalTips(Color accentColor) {
+  Widget _buildEmotionalTips(
+      Color accentColor, Color cardColor, Color hintColor) {
     final tips = [
       {
         'emoji': '🧠',
@@ -219,7 +228,7 @@ class PeriodMaleView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor, // 👈
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -242,18 +251,18 @@ class PeriodMaleView extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                   child: Text(t['text']!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontFamily: 'Vazir',
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: hintColor, // 👈
                           height: 1.5)))
             ]))),
       ]),
     );
   }
 
-  // ===== ۵. داشبورد هوشمند =====
-  Widget _buildPredictionCard(String text, Color accentColor) {
+  Widget _buildPredictionCard(String text, Color accentColor, Color cardColor,
+      Color textColor, Color hintColor) {
     final progress = currentDay / cycleLength;
     final daysLeft = cycleLength - currentDay;
     String statusLabel, statusEmoji;
@@ -276,7 +285,7 @@ class PeriodMaleView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor, // 👈
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -309,10 +318,10 @@ class PeriodMaleView extends StatelessWidget {
                         color: accentColor)),
                 const SizedBox(height: 2),
                 Text(text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: 'Vazir',
                         fontSize: 12,
-                        color: Color(0xFF888888)))
+                        color: hintColor)) // 👈
               ])),
           SizedBox(
               width: 56,
@@ -347,17 +356,20 @@ class PeriodMaleView extends StatelessWidget {
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _infoChip('📅', 'امروز', 'روز $currentDay', accentColor),
+                  _infoChip(
+                      '📅', 'امروز', 'روز $currentDay', accentColor, hintColor),
                   Container(
                       width: 1,
                       height: 40,
                       color: accentColor.withOpacity(0.1)),
-                  _infoChip('⏳', 'مانده', '$daysLeft روز', accentColor),
+                  _infoChip(
+                      '⏳', 'مانده', '$daysLeft روز', accentColor, hintColor),
                   Container(
                       width: 1,
                       height: 40,
                       color: accentColor.withOpacity(0.1)),
-                  _infoChip('🔄', 'طول سیکل', '$cycleLength روز', accentColor),
+                  _infoChip('🔄', 'طول سیکل', '$cycleLength روز', accentColor,
+                      hintColor),
                 ])),
         const SizedBox(height: 14),
         ClipRRect(
@@ -373,7 +385,7 @@ class PeriodMaleView extends StatelessWidget {
               style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 10,
-                  color: Colors.grey.shade400)),
+                  color: hintColor.withOpacity(0.6))), // 👈
           Text('${(progress * 100).toInt()}%',
               style: TextStyle(
                   fontFamily: 'Vazir',
@@ -384,14 +396,14 @@ class PeriodMaleView extends StatelessWidget {
               style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 10,
-                  color: Colors.grey.shade400)),
+                  color: hintColor.withOpacity(0.6))), // 👈
         ]),
       ]),
     );
   }
 
-  Widget _infoChip(
-      String emoji, String label, String value, Color accentColor) {
+  Widget _infoChip(String emoji, String label, String value, Color accentColor,
+      Color hintColor) {
     return Column(children: [
       Text(emoji, style: const TextStyle(fontSize: 18)),
       const SizedBox(height: 4),
@@ -403,8 +415,8 @@ class PeriodMaleView extends StatelessWidget {
               color: accentColor)),
       const SizedBox(height: 2),
       Text(label,
-          style: const TextStyle(
-              fontFamily: 'Vazir', fontSize: 10, color: Color(0xFF999999))),
+          style: TextStyle(
+              fontFamily: 'Vazir', fontSize: 10, color: hintColor)), // 👈
     ]);
   }
 }

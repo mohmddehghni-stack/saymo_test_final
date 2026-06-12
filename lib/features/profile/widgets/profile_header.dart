@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String username;
@@ -22,15 +23,27 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ پس‌زمینه: در شب یک رنگ تیره ساده، در روز همون گرادینت برند
+    final Color darkBgColor =
+        appTheme?.cardBackground ?? const Color(0xFF1E1E1E);
+
     return Container(
       height: 170,
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        // اگر شب بود → رنگ تخت (بدون گرادینت)، در غیر این صورت → گرادینت برند
+        gradient: isDark
+            ? null // حذف گرادینت
+            : const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: isDark ? darkBgColor : null, // رنگ ثابت فقط در شب
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
@@ -41,7 +54,6 @@ class ProfileHeader extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 🔥 آواتار جدید
             UserAvatar(
               username: username,
               gender: gender,
@@ -51,7 +63,6 @@ class ProfileHeader extends StatelessWidget {
               onCameraTap: onCameraTap,
             ),
             const SizedBox(width: 16),
-            // اسم و ID
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +90,6 @@ class ProfileHeader extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            // دکمه خروج
             GestureDetector(
               onTap: onLogout,
               child: Container(

@@ -3,22 +3,34 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import '../../features/home/pages/home_page.dart';
 import '../../features/calendar/pages/calendar_page.dart';
 import '../../features/profile/pages/profile_page.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 Widget buildBottomNav(
   BuildContext context, {
   String activePage = 'home',
 }) {
   if (activePage == 'notes') return const SizedBox.shrink();
+
+  // 🔥 دریافت تم
+  final appTheme = Theme.of(context).extension<AppTheme>();
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+
+  // رنگ‌های تطبیق‌یافته
+  final Color navBg = isDark
+      ? const Color.fromARGB(255, 43, 43, 43)
+      : (appTheme?.cardBackground ?? Colors.white); // سفید در روز
+  final Color inactiveColor = appTheme?.textHint ?? Colors.grey.shade500;
+
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
     child: Container(
       height: 68,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: navBg, // 👈 پس‌زمینه پویا
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -41,6 +53,7 @@ Widget buildBottomNav(
                   );
                 }
               },
+              inactiveColor: inactiveColor, // 👈
             ),
             _ModernNavItem(
               icon: Icons.calendar_today_rounded,
@@ -54,6 +67,7 @@ Widget buildBottomNav(
                   );
                 }
               },
+              inactiveColor: inactiveColor, // 👈
             ),
             _ModernNavItem(
               icon: Icons.movie_rounded,
@@ -62,6 +76,7 @@ Widget buildBottomNav(
               onTap: () {
                 // مسیر سینما
               },
+              inactiveColor: inactiveColor, // 👈
             ),
             _ModernNavItem(
               icon: Icons.person_rounded,
@@ -75,6 +90,7 @@ Widget buildBottomNav(
                   );
                 }
               },
+              inactiveColor: inactiveColor, // 👈
             ),
           ],
         ),
@@ -91,12 +107,14 @@ class _ModernNavItem extends StatefulWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final Color inactiveColor; // 👈 جدید
 
   const _ModernNavItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
+    required this.inactiveColor, // 👈
   });
 
   @override
@@ -170,8 +188,9 @@ class _ModernNavItemState extends State<_ModernNavItem>
               child: Icon(
                 widget.icon,
                 size: 24,
-                color:
-                    widget.isActive ? AppColors.primary : Colors.grey.shade500,
+                color: widget.isActive
+                    ? AppColors.primary
+                    : widget.inactiveColor, // 👈 جایگزین Colors.grey.shade500
               ),
             ),
             const SizedBox(height: 4),
@@ -182,8 +201,9 @@ class _ModernNavItemState extends State<_ModernNavItem>
                 fontSize: 10,
                 fontFamily: 'Vazir',
                 fontWeight: widget.isActive ? FontWeight.w700 : FontWeight.w400,
-                color:
-                    widget.isActive ? AppColors.primary : Colors.grey.shade500,
+                color: widget.isActive
+                    ? AppColors.primary
+                    : widget.inactiveColor, // 👈
               ),
             ),
           ],

@@ -15,8 +15,8 @@ import '../widgets/partner_info_card.dart';
 import 'package:flutter_application_1/shared/widgets/avatar_picker_dialog.dart';
 import 'package:flutter_application_1/shared/services/image_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_application_1/shared/services/api_service.dart';
 import 'package:flutter_application_1/features/auth/pages/welcome_screen.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -43,7 +43,6 @@ class _ProfilePageState extends State<ProfilePage> {
         final user = response['user'];
         final appProvider = context.read<AppProvider>();
 
-        // 🔥 اطلاعات پایه
         if (user['display_name'] != null) {
           appProvider.setDisplayName(user['display_name']);
         }
@@ -54,12 +53,10 @@ class _ProfilePageState extends State<ProfilePage> {
           appProvider.setAvatarUrl(user['avatar_url']);
         }
 
-        // 🔥 coupleId (جدید)
         if (user['couple_id'] != null) {
           appProvider.setCoupleId(user['couple_id']);
         }
 
-        // 🔥 اطلاعات پارتنر (اگر وجود داشت)
         final partner = response['partner'];
         if (partner != null) {
           appProvider.connectPartner(
@@ -70,7 +67,6 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
 
-        // 🔥 آپدیت UI
         setState(() {
           _userData = user;
           _isLoading = false;
@@ -82,11 +78,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    // 🔥 دریافت تم برای دیالوگ
+    final appTheme = Theme.of(context).extension<AppTheme>();
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
+        backgroundColor: appTheme?.cardBackground ?? Colors.white, // 👈
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -103,19 +101,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: Colors.red.shade400, size: 40),
               ),
               const SizedBox(height: 16),
-              const Text('حذف حساب کاربری',
+              Text('حذف حساب کاربری',
                   style: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 18,
-                      fontWeight: FontWeight.bold)),
+                      fontWeight: FontWeight.bold,
+                      color: appTheme?.textPrimary ?? Colors.black)), // 👈
               const SizedBox(height: 8),
-              const Text(
+              Text(
                   'این عملیات غیرقابل بازگشته!\nهمه اطلاعاتت برای همیشه پاک میشه 💔',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 13,
-                      color: Colors.black54)),
+                      color: appTheme?.textHint ?? Colors.black54)), // 👈
               const SizedBox(height: 20),
               Row(children: [
                 Expanded(
@@ -179,6 +178,9 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -189,10 +191,11 @@ class _ProfilePageState extends State<ProfilePage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Stack(
-        // 🔥 کل صفحه رو توی یک Stack می‌ذاریم
         children: [
           Scaffold(
-            backgroundColor: const Color(0xfff5f5f5),
+            // 👇 پس‌زمینه Scaffold
+            backgroundColor:
+                appTheme?.surfaceBackground ?? const Color(0xfff5f5f5),
             body: SafeArea(
               child: SingleChildScrollView(
                 child: Column(
@@ -228,8 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           final avatarUrl =
                               await ImageService.uploadAvatar(result);
 
-                          if (!mounted)
-                            return; // 🔥 اگر کاربر برگشت، هیچ کاری نکن
+                          if (!mounted) return;
 
                           setState(() {
                             if (avatarUrl != null) {
@@ -243,7 +245,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           });
 
                           if (avatarUrl != null) {
-                            // 👈 اینو بذار بیرون از setState
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) {
                                 appProvider.setAvatarUrl(avatarUrl);
@@ -349,7 +350,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             bottomNavigationBar: buildBottomNav(context, activePage: 'profile'),
           ),
-          // 🔥 لایه لودینگ آپلود
           if (_isUploading)
             Container(
               color: Colors.black.withOpacity(0.3),

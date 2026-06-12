@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/notes_manager_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class NotesMyList extends StatelessWidget {
   final List<NoteItem> notes;
@@ -26,11 +27,30 @@ class NotesMyList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های تطبیق‌یافته
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF3E2723);
+    final Color hintColor = appTheme?.textHint ?? Colors.grey;
+    final Color emptyTextColor = appTheme?.textHint ?? Colors.black26;
+    final Color checkedTextColor = const Color(0xFFADADAD); // ثابت می‌ماند
+    final Color unselectedIconColor = hintColor; // جایگزین Colors.grey
+    final Color editHighlightBg = isDark
+        ? AppColors.primaryDark.withOpacity(0.08)
+        : AppColors.periodBackground;
+
     if (notes.isEmpty) {
-      return const Center(
-        child: Text('چیزی یادداشت نکردی امروز... ✍️',
-            style: TextStyle(
-                fontFamily: 'Vazir', fontSize: 13, color: Colors.black26)),
+      return Center(
+        child: Text(
+          'چیزی یادداشت نکردی امروز... ✍️',
+          style: TextStyle(
+            fontFamily: 'Vazir',
+            fontSize: 13,
+            color: emptyTextColor, // 👈 جایگزین Colors.black26
+          ),
+        ),
       );
     }
     return ListView.builder(
@@ -40,20 +60,34 @@ class NotesMyList extends StatelessWidget {
         return GestureDetector(
           onTap: () {
             if (isTickMode) {
-              onTick(note.id); // 🔥 فقط تیک
+              onTick(note.id);
             } else if (isDeleteMode) {
-              provider.toggleSelectForDelete(note.id); // 🔥 فقط انتخاب حذف
+              provider.toggleSelectForDelete(note.id);
             } else if (isEditMode) {
-              onEdit(note.id); // 🔥 فقط ویرایش
+              onEdit(note.id);
             }
           },
-          child: _buildBubble(note),
+          child: _buildBubble(
+            note,
+            textColor: textColor,
+            hintColor: hintColor,
+            checkedTextColor: checkedTextColor,
+            unselectedIconColor: unselectedIconColor,
+            editHighlightBg: editHighlightBg,
+          ),
         );
       },
     );
   }
 
-  Widget _buildBubble(NoteItem note) {
+  Widget _buildBubble(
+    NoteItem note, {
+    required Color textColor,
+    required Color hintColor,
+    required Color checkedTextColor,
+    required Color unselectedIconColor,
+    required Color editHighlightBg,
+  }) {
     final isTickChecked = note.isChecked;
     final isDeleteSelected = note.isSelectedForDelete;
     final showCheckbox = isTickMode || isDeleteMode;
@@ -70,9 +104,9 @@ class NotesMyList extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   if (isTickMode) {
-                    onTick(note.id); // 🔥 تیک
+                    onTick(note.id);
                   } else if (isDeleteMode) {
-                    provider.toggleSelectForDelete(note.id); // 🔥 انتخاب حذف
+                    provider.toggleSelectForDelete(note.id);
                   }
                 },
                 child: Icon(
@@ -83,9 +117,12 @@ class NotesMyList extends StatelessWidget {
                       : (isTickChecked
                           ? Icons.check_circle
                           : Icons.check_circle_outline),
+                  // رنگ آیکن
                   color: isDeleteMode
-                      ? (isDeleteSelected ? Colors.red : Colors.grey)
-                      : (isTickChecked ? AppColors.primaryDark : Colors.grey),
+                      ? (isDeleteSelected ? Colors.red : unselectedIconColor)
+                      : (isTickChecked
+                          ? AppColors.primaryDark
+                          : unselectedIconColor),
                   size: 22,
                 ),
               ),
@@ -94,13 +131,10 @@ class NotesMyList extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isEditingThis
-                    ? AppColors.periodBackground
-                    : Colors.transparent,
+                color: isEditingThis ? editHighlightBg : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: isEditingThis
-                    ? Border.all(
-                        color: AppColors.primaryDark.withValues(alpha: 0.3))
+                    ? Border.all(color: AppColors.primaryDark.withOpacity(0.3))
                     : null,
               ),
               child: Align(
@@ -114,23 +148,23 @@ class NotesMyList extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Vazir',
                         fontSize: 14,
-                        color: isTickChecked
-                            ? const Color(
-                                0xFFADADAD) // 🔥 رنگ خاکستری وقتی خط خورده
-                            : const Color(0xFF3E2723), // رنگ اصلی
+                        // رنگ متن: اگر تیک خورده = خط‌خورده خاکستری، وگرنه متن اصلی
+                        color: isTickChecked ? checkedTextColor : textColor,
                         decoration:
                             isTickChecked ? TextDecoration.lineThrough : null,
-                        decorationColor:
-                            AppColors.primaryDark, // 🔥 رنگ خط (صورتی)
-                        decorationThickness: 2.5, // 🔥 ضخامت خط (یکم کلفت‌تر)
+                        decorationColor: AppColors.primaryDark,
+                        decorationThickness: 2.5,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(note.time,
-                        style: const TextStyle(
-                            fontFamily: 'Vazir',
-                            fontSize: 10,
-                            color: Colors.grey)),
+                    Text(
+                      note.time,
+                      style: TextStyle(
+                        fontFamily: 'Vazir',
+                        fontSize: 10,
+                        color: hintColor, // 👈 جایگزین Colors.grey
+                      ),
+                    ),
                   ],
                 ),
               ),

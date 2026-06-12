@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'event_data.dart';
 import 'package:flutter_application_1/core/providers/calendar_provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class EventChips extends StatelessWidget {
   final List<EventData> allEvents;
@@ -20,12 +21,14 @@ class EventChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 دیگه فیلتر ماه جاری رو برنداشتیم - همه رویدادها رو نشون بده
+    // 🔥 گرفتن تم و وضعیت
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (allEvents.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // 🔥 مرتب‌سازی: نزدیک‌ترین رویداد به امروز اول باشه
     final sortedEvents = List<EventData>.from(allEvents);
     sortedEvents.sort((a, b) {
       final now = Jalali.now().toDateTime();
@@ -43,7 +46,6 @@ class EventChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final event = sortedEvents[index];
 
-          // 🔥 چک می‌کنیم آیا این رویداد برای روز انتخاب شده هست
           final selectedDay = cp.selectedDay;
           final isSelected = selectedDay != null &&
               event.date.day == selectedDay &&
@@ -52,9 +54,7 @@ class EventChips extends StatelessWidget {
 
           return GestureDetector(
             onTap: () {
-              // 🔥 با کلیک روی چیپ، برو به ماه و روز اون رویداد
               cp.changeMonth(event.date.year, event.date.month);
-              // یه تاخیر کوچیک بده که ماه عوض بشه
               Future.delayed(const Duration(milliseconds: 100), () {
                 cp.selectDay(event.date.day);
               });
@@ -65,7 +65,10 @@ class EventChips extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: isSelected ? event.color : cardBg,
+                // پس‌زمینه: انتخاب‌شده = رنگ event، انتخاب‌نشده = رنگ کارت (پویا)
+                color: isSelected
+                    ? event.color
+                    : (appTheme?.cardBackground ?? cardBg),
                 borderRadius: BorderRadius.circular(19),
                 border: Border.all(
                   color: isSelected
@@ -90,14 +93,16 @@ class EventChips extends StatelessWidget {
                     style: TextStyle(fontSize: isSelected ? 14 : 11),
                   ),
                   const SizedBox(width: 5),
-                  // 🔥 حالا تاریخ رو هم نشون می‌ده که بدونن مال کدوم ماهه
                   Text(
                     event.shortText,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.white : textGrey,
+                      // متن: انتخاب‌شده = سفید، انتخاب‌نشده = رنگ راهنما (پویا)
+                      color: isSelected
+                          ? Colors.white
+                          : (appTheme?.textHint ?? textGrey),
                     ),
                   ),
                 ],

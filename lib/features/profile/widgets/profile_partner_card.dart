@@ -14,16 +14,26 @@ class ProfilePartnerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).extension<AppTheme>()!;
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color cardBg = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color hintColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
+    final Color shadowColor = appTheme?.shadowColor ?? const Color(0x0F000000);
+    final Color neutralGrey =
+        hintColor; // استفاده از hintColor به‌جای خاکستری ثابت
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor,
+            color: shadowColor,
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -37,12 +47,12 @@ class ProfilePartnerCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: isConnected
                   ? AppColors.primary.withOpacity(0.08)
-                  : Colors.grey.withOpacity(0.08),
+                  : neutralGrey.withOpacity(0.08),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               isConnected ? Icons.favorite_rounded : Icons.person_add_rounded,
-              color: isConnected ? AppColors.primary : Colors.grey,
+              color: isConnected ? AppColors.primary : neutralGrey,
               size: 24,
             ),
           ),
@@ -58,7 +68,7 @@ class ProfilePartnerCard extends StatelessWidget {
                     fontFamily: 'Vazir',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: isConnected ? AppColors.primary : Colors.grey,
+                    color: isConnected ? AppColors.primary : neutralGrey,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -67,7 +77,7 @@ class ProfilePartnerCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 12,
-                    color: theme.textHint,
+                    color: hintColor,
                   ),
                 ),
               ],
@@ -79,8 +89,9 @@ class ProfilePartnerCard extends StatelessWidget {
             height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color:
-                  isConnected ? const Color(0xFF4CAF50) : Colors.grey.shade400,
+              color: isConnected
+                  ? const Color(0xFF4CAF50)
+                  : neutralGrey.withOpacity(0.5),
             ),
           ),
         ],

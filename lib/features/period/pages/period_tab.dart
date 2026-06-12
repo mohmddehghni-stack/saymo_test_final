@@ -5,6 +5,7 @@ import 'package:flutter_application_1/core/providers/period_provider.dart';
 import 'period_female_view.dart';
 import 'period_male_view.dart';
 import 'package:flutter_application_1/features/period/pages/period_setup_view.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class PeriodTab extends StatelessWidget {
   final bool isFemale;
@@ -14,8 +15,8 @@ class PeriodTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pp = context.watch<PeriodProvider>();
+    final appTheme = Theme.of(context).extension<AppTheme>();
 
-    // 👩‍🦰 برای دختر - منطق قبلی
     if (isFemale) {
       if (!pp.isSetupDone) {
         return const PeriodSetupPrompt();
@@ -23,7 +24,6 @@ class PeriodTab extends StatelessWidget {
       return const PeriodFemaleView();
     }
 
-    // 👦 برای پسر - منطق جدید
     if (!pp.partnerDataLoaded) {
       Future.microtask(() => pp.loadPartnerData());
       return const Center(
@@ -43,7 +43,8 @@ class PeriodTab extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Vazir',
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                // 👇 متن راهنما از AppTheme
+                color: appTheme?.textHint ?? Colors.grey.shade600,
               ),
             ),
           ],
@@ -68,16 +69,21 @@ class PeriodSetupPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text('👩‍🦰', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'اول تنظیمات پریود رو انجام بده',
             style: TextStyle(
-                fontFamily: 'Vazir', fontSize: 16, color: Color(0xFF5D4037)),
+              fontFamily: 'Vazir',
+              fontSize: 16,
+              // 👇 متن اصلی از AppTheme
+              color: appTheme?.textPrimary ?? const Color(0xFF5D4037),
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -106,6 +112,7 @@ class PartnerNotSetupView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -118,7 +125,8 @@ class PartnerNotSetupView extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Vazir',
               fontSize: 16,
-              color: Colors.grey.shade600,
+              // 👇
+              color: appTheme?.textHint ?? Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 8),
@@ -128,7 +136,8 @@ class PartnerNotSetupView extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Vazir',
               fontSize: 14,
-              color: Colors.grey.shade400,
+              // 👇
+              color: (appTheme?.textHint ?? Colors.grey).withOpacity(0.7),
             ),
           ),
         ],

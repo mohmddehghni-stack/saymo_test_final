@@ -8,6 +8,7 @@ import '../widgets/guide_card.dart';
 import '../widgets/history_section.dart';
 import '../widgets/pain_chart.dart';
 import 'symptom_sheet.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class PeriodFemaleView extends StatelessWidget {
   final VoidCallback? onPeriodChanged;
@@ -17,13 +18,16 @@ class PeriodFemaleView extends StatelessWidget {
     this.onPeriodChanged,
   });
 
-  // رنگ‌های برند جدید
   static const Color primaryPink = Color(0xFFFE4773);
   static const Color primaryPurple = Color(0xFF862AF5);
 
   @override
   Widget build(BuildContext context) {
     final pp = context.watch<PeriodProvider>();
+
+    // 🔥 تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 40),
@@ -82,7 +86,7 @@ class PeriodFemaleView extends StatelessWidget {
                   height: 64,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [primaryPink, primaryPurple], // صورتی → بنفش
+                      colors: [primaryPink, primaryPurple],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -96,12 +100,13 @@ class PeriodFemaleView extends StatelessWidget {
                   child: const Icon(Icons.add, color: Colors.white, size: 32),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'ثبت حال امروز',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 13,
-                    color: Color(0xFF8E8E98), // خاکستری ملایم
+                    // 👇 متن در تم تاریک روشن‌تر می‌شود
+                    color: appTheme?.textHint ?? const Color(0xFF8E8E98),
                   ),
                 ),
               ],

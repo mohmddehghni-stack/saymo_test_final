@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class SupportPage extends StatefulWidget {
   const SupportPage({super.key});
@@ -79,14 +80,27 @@ class _SupportPageState extends State<SupportPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color scaffoldBg =
+        appTheme?.surfaceBackground ?? const Color(0xFFF5F0E8);
+    final Color cardBg = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF3E2723);
+    final Color hintColor = appTheme?.textHint ?? Colors.grey;
+    final Color inputBg =
+        isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF5F0E8);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0E8),
+      backgroundColor: scaffoldBg, // 👈 پس‌زمینه کل صفحه
       appBar: AppBar(
         title: const Text(
           'پشتیبانی',
           style: TextStyle(fontFamily: 'Vazir', fontSize: 18),
         ),
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: AppColors.primaryDark, // رنگ برند ثابت می‌ماند
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -96,7 +110,7 @@ class _SupportPageState extends State<SupportPage> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg, // 👈 کارت سفید/تیره
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -108,29 +122,30 @@ class _SupportPageState extends State<SupportPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '📝 تیکت جدید',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5D4037),
+                    color: textColor, // 👈
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _titleController,
                   textDirection: TextDirection.rtl,
-                  style: const TextStyle(fontFamily: 'Vazir', fontSize: 13),
+                  style: TextStyle(
+                      fontFamily: 'Vazir', fontSize: 13, color: textColor),
                   decoration: InputDecoration(
                     hintText: 'عنوان تیکت',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 13,
-                      color: Colors.grey,
+                      color: hintColor, // 👈
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF5F0E8),
+                    fillColor: inputBg, // 👈
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -143,16 +158,17 @@ class _SupportPageState extends State<SupportPage> {
                   controller: _messageController,
                   textDirection: TextDirection.rtl,
                   maxLines: 4,
-                  style: const TextStyle(fontFamily: 'Vazir', fontSize: 13),
+                  style: TextStyle(
+                      fontFamily: 'Vazir', fontSize: 13, color: textColor),
                   decoration: InputDecoration(
                     hintText: 'توضیح مشکل...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 13,
-                      color: Colors.grey,
+                      color: hintColor, // 👈
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF5F0E8),
+                    fillColor: inputBg, // 👈
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -187,19 +203,19 @@ class _SupportPageState extends State<SupportPage> {
           ),
 
           // لیست تیکت‌های قبلی
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Icon(Icons.history, color: Color(0xFF5D4037), size: 18),
-                SizedBox(width: 6),
+                Icon(Icons.history, color: textColor, size: 18), // 👈
+                const SizedBox(width: 6),
                 Text(
                   'تیکت‌های قبلی',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5D4037),
+                    color: textColor, // 👈
                   ),
                 ),
               ],
@@ -217,7 +233,7 @@ class _SupportPageState extends State<SupportPage> {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg, // 👈
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -243,11 +259,11 @@ class _SupportPageState extends State<SupportPage> {
                           children: [
                             Text(
                               ticket['title'] as String,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Vazir',
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF3E2723),
+                                color: textColor, // 👈
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -264,10 +280,10 @@ class _SupportPageState extends State<SupportPage> {
                                 const SizedBox(width: 12),
                                 Text(
                                   ticket['date'] as String,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Vazir',
                                     fontSize: 11,
-                                    color: Colors.grey,
+                                    color: hintColor, // 👈
                                   ),
                                 ),
                               ],

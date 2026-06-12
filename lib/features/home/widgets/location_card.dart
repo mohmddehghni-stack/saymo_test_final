@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_application_1/shared/services/couple_service.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class LocationCard extends StatefulWidget {
   const LocationCard({super.key});
@@ -68,6 +69,7 @@ class _LocationCardState extends State<LocationCard> {
   }
 
   void _showUpdateMessage() {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     showDialog(
       context: context,
       builder: (context) {
@@ -75,7 +77,7 @@ class _LocationCardState extends State<LocationCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: appTheme?.cardBackground ?? Colors.white, // 🔥
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -85,8 +87,8 @@ class _LocationCardState extends State<LocationCard> {
                   height: 70,
                   width: 70,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primaryPink, primaryPurple], // صورتی → بنفش
+                    gradient: const LinearGradient(
+                      colors: [primaryPink, primaryPurple],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -97,22 +99,23 @@ class _LocationCardState extends State<LocationCard> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'موقعیتت بروز شد! 📍',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
+                    color:
+                        appTheme?.textPrimary ?? const Color(0xFF333333), // 🔥
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'عشقت می‌تونه ببینه کجایی... ❤️',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 13,
-                    color: Colors.black45,
+                    color: appTheme?.textHint ?? Colors.black45, // 🔥
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -148,14 +151,17 @@ class _LocationCardState extends State<LocationCard> {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appTheme?.cardBackground ?? Colors.white, // 🔥
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: (appTheme?.shadowColor ?? Colors.black).withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -175,14 +181,13 @@ class _LocationCardState extends State<LocationCard> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  primaryPink.withOpacity(0.03), // صورتی خیلی کمرنگ
-                  primaryPurple.withOpacity(0.02), // بنفش خیلی کمرنگ
+                  primaryPink.withOpacity(0.03),
+                  primaryPurple.withOpacity(0.02),
                 ],
               ),
             ),
             child: Stack(
               children: [
-                // شبکه خیابان‌های ساختگی
                 ...List.generate(5, (i) {
                   return Positioned(
                     top: 25.0 + (i * 32),
@@ -218,7 +223,7 @@ class _LocationCardState extends State<LocationCard> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: appTheme?.cardBackground ?? Colors.white, // 🔥
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: const [
                             BoxShadow(color: Colors.black12, blurRadius: 4),
@@ -269,7 +274,7 @@ class _LocationCardState extends State<LocationCard> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: appTheme?.cardBackground ?? Colors.white, // 🔥
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: const [
                             BoxShadow(color: Colors.black12, blurRadius: 4),
@@ -326,7 +331,6 @@ class _LocationCardState extends State<LocationCard> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // ردیف وضعیت‌ها
                 Row(
                   children: [
                     // وضعیت من
@@ -352,12 +356,13 @@ class _LocationCardState extends State<LocationCard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'موقعیت تو',
                                     style: TextStyle(
                                       fontFamily: 'Vazir',
                                       fontSize: 10,
-                                      color: Colors.black45,
+                                      color: appTheme?.textHint ??
+                                          Colors.black45, // 🔥
                                     ),
                                   ),
                                   Text(
@@ -402,12 +407,13 @@ class _LocationCardState extends State<LocationCard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'موقعیت عشقت',
                                     style: TextStyle(
                                       fontFamily: 'Vazir',
                                       fontSize: 10,
-                                      color: Colors.black45,
+                                      color: appTheme?.textHint ??
+                                          Colors.black45, // 🔥
                                     ),
                                   ),
                                   Text(

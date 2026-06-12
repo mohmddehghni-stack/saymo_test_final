@@ -26,7 +26,7 @@ class SpeedFanFAB extends StatefulWidget {
   final IconData? closeIcon;
   final String? openEmoji;
   final String? closeEmoji;
-  final VoidCallback? onOpenChanged;
+  final void Function(bool isOpen)? onOpenChanged;
 
   const SpeedFanFAB({
     super.key,
@@ -65,12 +65,6 @@ class SpeedFanFABState extends State<SpeedFanFAB>
     );
 
     // 👈 اینو اضافه کن - گوش دادن به وضعیت انیمیشن
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed ||
-          status == AnimationStatus.dismissed) {
-        widget.onOpenChanged?.call();
-      }
-    });
   }
 
   void _toggle() {
@@ -81,8 +75,8 @@ class SpeedFanFABState extends State<SpeedFanFAB>
       } else {
         _controller.reverse();
       }
-      widget.onOpenChanged?.call();
     });
+    widget.onOpenChanged?.call(_isOpen);
   }
 
   void close() {
@@ -91,7 +85,7 @@ class SpeedFanFABState extends State<SpeedFanFAB>
         _isOpen = false;
         _controller.reverse();
       });
-      widget.onOpenChanged?.call();
+      widget.onOpenChanged?.call(false);
     }
   }
 

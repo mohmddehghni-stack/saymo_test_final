@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class PartnerInfoCard extends StatelessWidget {
   final String? displayName;
@@ -20,11 +21,15 @@ class PartnerInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isConnected = displayName != null;
 
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfacePrimary,
+        color: appTheme?.cardBackground ??
+            AppColors.surfacePrimary, // 👈 پس‌زمینه کارت
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -64,27 +69,30 @@ class PartnerInfoCard extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Vazir',
-                    color: isConnected ? AppColors.primary : AppColors.textHint,
+                    color: isConnected
+                        ? AppColors.primary
+                        : (appTheme?.textHint ?? AppColors.textHint), // 👈
                   ),
                 ),
                 if (isConnected) ...[
                   const SizedBox(height: 6),
                   Text(
                     displayName!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Vazir',
-                      color: AppColors.textPrimary,
+                      color:
+                          appTheme?.textPrimary ?? AppColors.textPrimary, // 👈
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '@${username ?? ''}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'Vazir',
-                      color: AppColors.textHint,
+                      color: appTheme?.textHint ?? AppColors.textHint, // 👈
                     ),
                   ),
                 ],

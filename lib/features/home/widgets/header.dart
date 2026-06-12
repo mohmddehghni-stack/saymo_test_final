@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class Header extends StatefulWidget {
   final VoidCallback onMenuTap;
@@ -42,17 +43,22 @@ class _HeaderState extends State<Header> {
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
+    final appTheme = Theme.of(context).extension<AppTheme>(); // 👈 جدید
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: headerBg, // پس‌زمینه صورتی لطیف
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      decoration: BoxDecoration(
+        color: isDark
+            ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+            : headerBg,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Color(0xFF1A1A2E)),
+            icon: Icon(Icons.menu,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
             onPressed: widget.onMenuTap,
           ),
           const Spacer(),
@@ -70,6 +76,8 @@ class _HeaderState extends State<Header> {
   }
 
   Widget _buildDatePicker() {
+    final appTheme = Theme.of(context).extension<AppTheme>(); // 👈 جدید
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () async {
         final DateTime? picked = await showDatePicker(
@@ -117,7 +125,9 @@ class _HeaderState extends State<Header> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark
+              ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+              : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: primaryPink.withOpacity(0.3)),
         ),
@@ -126,11 +136,11 @@ class _HeaderState extends State<Header> {
           children: [
             const Icon(Icons.favorite, color: primaryPink, size: 18),
             const SizedBox(width: 6),
-            const Text('تاریخ شروع رابطه',
+            Text('تاریخ شروع رابطه',
                 style: TextStyle(
                     fontSize: 13,
                     fontFamily: 'Vazir',
-                    color: Color(0xFF1A1A2E))),
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
           ],
         ),
       ),
@@ -138,6 +148,8 @@ class _HeaderState extends State<Header> {
   }
 
   Widget _buildCounter() {
+    final appTheme = Theme.of(context).extension<AppTheme>(); // 👈 جدید
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final years = (elapsed.inDays / 365.25).floor();
     final remainingDays = elapsed.inDays - (years * 365).toInt();
     final months = (remainingDays / 30.44).floor();
@@ -170,11 +182,11 @@ class _HeaderState extends State<Header> {
             children: [
               Text(
                 '$years سال  $months ماه  $days روز',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 11,
                     fontFamily: 'Vazir',
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A2E)),
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
               ),
               Text(
                 '${_twoDigits(hours)}:${_twoDigits(minutes)}:${_twoDigits(seconds)}',

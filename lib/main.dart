@@ -23,6 +23,7 @@ import 'core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/shared/services/notification_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_application_1/core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,10 +46,6 @@ void main() async {
 
   final appProvider = AppProvider();
   await appProvider.loadFromStorage();
-
-  print('🔍 AFTER LOAD - userId: ${appProvider.userId}');
-  print('🔍 AFTER LOAD - partnerId: ${appProvider.partnerId}');
-  print('🔍 AFTER LOAD - isConnected: ${appProvider.isConnected}');
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -103,6 +100,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CoupleCacheProvider()),
         ChangeNotifierProvider.value(value: momentProvider),
         ChangeNotifierProvider(create: (_) => NotesManagerProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -119,11 +117,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       locale: const Locale('fa', 'IR'),
       supportedLocales: const [Locale('fa', 'IR'), Locale('en', 'US')],
+      themeMode: themeProvider.themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -134,23 +134,77 @@ class MyApp extends StatelessWidget {
       },
 
       // 🔥 Dark Mode
-      themeMode: appProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
-      // 🌙 تم تاریک
-      darkTheme: ThemeData.dark().copyWith(
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: false,
         extensions: const [AppTheme.dark],
-        scaffoldBackgroundColor: const Color(0xFF1A1A2E),
+        scaffoldBackgroundColor: const Color(0xFF0A0A0A), // مشکی خیلی تیره
         colorScheme: const ColorScheme.dark(
-          primary: AppColors.primary,
-          surface: Color(0xFF16213E),
+          primary: AppColors.primary, // صورتی قدیمی
+          secondary: AppColors.secondary, // بنفش قدیمی
+          surface: Color(0xFF1A1A1A), // خاکستری تیره خنثی
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
           onSurface: Colors.white,
+          error: AppColors.error,
         ),
+        // دکمه‌ها
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        // نوار پایین
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Color(0xFF1A1A1A),
+        ),
+        // متن
         textTheme: const TextTheme(
           bodyLarge: TextStyle(fontFamily: 'Vazir', color: Colors.white),
           bodyMedium: TextStyle(fontFamily: 'Vazir', color: Colors.white),
           bodySmall: TextStyle(fontFamily: 'Vazir', color: Colors.white70),
           titleLarge: TextStyle(fontFamily: 'Vazir', color: Colors.white),
           titleMedium: TextStyle(fontFamily: 'Vazir', color: Colors.white),
+          titleSmall: TextStyle(fontFamily: 'Vazir', color: Colors.white70),
+          labelLarge: TextStyle(fontFamily: 'Vazir', color: Colors.white),
+          labelMedium: TextStyle(fontFamily: 'Vazir', color: Colors.white70),
+          labelSmall: TextStyle(fontFamily: 'Vazir', color: Colors.white60),
+        ),
+        // کارت‌ها
+        cardTheme: CardThemeData(
+          color: const Color(0xFF1E1E1E), // کمی روشن‌تر از سطح اصلی
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        // دیالوگ‌ها
+        dialogTheme: const DialogThemeData(
+          backgroundColor: Color(0xFF1E1E1E),
+          surfaceTintColor: Colors.transparent,
+        ),
+        // سوئیچ‌ها
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return AppColors.primary;
+            return Colors.grey;
+          }),
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected))
+              return AppColors.primary.withOpacity(0.5);
+            return Colors.grey.shade700;
+          }),
+        ),
+        // اپ‌بار
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1A1A1A),
+          foregroundColor: Colors.white,
+          elevation: 0,
         ),
       ),
 

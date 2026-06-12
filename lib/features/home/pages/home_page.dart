@@ -5,8 +5,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/side_menu.dart';
 import '../../../shared/services/socket_service.dart';
-import '../../video/pages/cinema_room_page.dart'; // 👈 جدید
-import '../../video/services/cinema_room_service.dart'; // 👈 جدید
+import '../../video/pages/cinema_room_page.dart';
+import '../../video/services/cinema_room_service.dart';
 import '../../video/widgets/invitation_dialog.dart';
 import '../widgets/header.dart';
 import '../widgets/calendar_strip.dart';
@@ -18,13 +18,13 @@ import '../widgets/miss_you_button.dart';
 import '../widgets/location_card.dart';
 import '../../../shared/widgets/bottom_nav.dart';
 import '../../../core/providers/app_provider.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/widgets/locked_widget.dart';
 import '../widgets/body_cards.dart';
 import 'package:flutter_application_1/shared/services/api_service.dart';
 import 'package:flutter_application_1/core/providers/moment_provider.dart';
 import 'package:flutter_application_1/core/providers/period_provider.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -45,7 +45,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     final appProvider = context.read<AppProvider>();
 
-    // اگر پارتنر از قبل هست، داده‌هایش را بعد از ساخت صفحه لود کن
     if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -55,10 +54,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
     }
 
-    // یک Listener برای وقتی که partnerId تغییر کرد
     appProvider.addListener(() {
+      if (!mounted) return;
       if (appProvider.partnerId != null && appProvider.partnerId!.isNotEmpty) {
-        // اینجا از callback استفاده نکن، چون Listener بعد از build اجرا میشه
         context.read<PeriodProvider>().loadPartnerData();
         context.read<MomentProvider>().loadMoments();
         _connectToSocket();
@@ -78,7 +76,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _tryPullPartner();
       _startSmartTimer();
 
-      // 🔥 با کمی تأخیر، تا UI آماده بشه
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           context.read<MomentProvider>().loadMoments();
@@ -94,12 +91,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _startSmartTimer() {
     _stopSmartTimer();
     _partnerCheckTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!_isAppInForeground) {
+      if (!mounted || !_isAppInForeground) {
         _stopSmartTimer();
         return;
       }
       final appProvider = context.read<AppProvider>();
-      // 🔥 اگر coupleId داریم و پارتنر هم داریم، دیگه نیازی به تایمر نیست
       if (appProvider.coupleId != null && appProvider.partnerId != null) {
         _stopSmartTimer();
         return;
@@ -114,6 +110,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _forceStopTimerIfConnected() {
+    if (!mounted) return;
     final appProvider = context.read<AppProvider>();
     if (appProvider.partnerId != null) {
       _stopSmartTimer();
@@ -121,18 +118,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _tryPullPartner() async {
+    if (!mounted) return;
     final appProvider = context.read<AppProvider>();
     if (appProvider.userId == null) return;
 
     try {
       final response = await ApiService.getProfile();
 
-      // ذخیره coupleId
       if (response['user']?['couple_id'] != null) {
         appProvider.setCoupleId(response['user']['couple_id']);
       }
 
-      // ذخیره اطلاعات خود کاربر
       if (response['user'] != null) {
         final user = response['user'];
         final userId = user['id'];
@@ -141,10 +137,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         appProvider.setGender(user['gender'] ?? '');
       }
 
-      // اگر پارتنر وصل نشده بود و حالا وصل شد
       if (appProvider.partnerId == null) {
         final partner = response['partner'];
-        if (partner != null) {
+        if (partner != null && mounted) {
           appProvider.connectPartner(
             partner['username'] ?? '',
             partnerId: partner['id']?.toString(),
@@ -152,8 +147,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             partnerGender: partner['gender'],
           );
           context.read<PeriodProvider>().loadPartnerData();
-          // 🔥 این دو خط را اضافه کن:
-          _connectToSocket(); // اتاق را به couple_ تغییر بده
+          _connectToSocket();
           _forceStopTimerIfConnected();
         }
       }
@@ -161,6 +155,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _connectToSocket() {
+    if (!mounted) return;
     final appProvider = context.read<AppProvider>();
     final token = ApiService.token;
     if (token == null || appProvider.userId == null) return;
@@ -175,22 +170,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     SocketService.connect(token: token, roomId: roomId);
 
-    // 🔥 بعد از اتصال، لحظه‌ها را بارگیری کن (با callback)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<MomentProvider>().loadMoments();
+          if (mounted) context.read<MomentProvider>().loadMoments();
         });
       }
     });
 
     SocketService.onMessage = (data) {
+      if (!mounted) return;
       if (data['action'] == 'incoming_invitation') _showInvitationDialog(data);
       if (data['action'] == 'reinvite') _showReinvitationDialog(data);
     };
   }
 
-  // برای دعوت معمولی
   void _showInvitationDialog(Map<String, dynamic> data) {
     if (!mounted) return;
     showDialog(
@@ -202,18 +196,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         acceptText: 'آره، بیا بریم! 🍿',
         rejectText: 'نه، ممنون',
         onAccept: () {
+          if (!mounted) return;
           Navigator.pop(context);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CinemaRoomPage()),
           );
         },
-        onReject: () => Navigator.pop(context),
+        onReject: () {
+          if (!mounted) return;
+          Navigator.pop(context);
+        },
       ),
     );
   }
 
-// برای دعوت مجدد
   void _showReinvitationDialog(Map<String, dynamic> data) {
     if (!mounted) return;
     showDialog(
@@ -225,18 +222,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         acceptText: 'برمی‌گردم ❤️',
         rejectText: 'الان نه',
         onAccept: () {
+          if (!mounted) return;
           Navigator.pop(context);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CinemaRoomPage()),
           );
         },
-        onReject: () => Navigator.pop(context),
+        onReject: () {
+          if (!mounted) return;
+          Navigator.pop(context);
+        },
       ),
     );
   }
 
   void _onConnected() {
+    if (!mounted) return;
     context.read<AppProvider>().connectPartner('پارتنر');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -248,8 +250,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  // 👈 ورود به سینمای دونفره
   void _openCinemaRoom() {
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const CinemaRoomPage()),
@@ -265,23 +267,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print(
-        '🏠 DEBUG HomePage -> coupleId: ${ApiService.coupleId}, token: ${ApiService.token != null ? "YES" : "NO"}');
-
     final appProvider = context.watch<AppProvider>();
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: ValueKey('home_${isDark ? 'dark' : 'light'}'),
       extendBody: true,
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color.fromARGB(255, 255, 255, 255),
-                Color.fromARGB(255, 247, 247, 255)
-              ]),
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    appTheme?.surfaceBackground ?? const Color(0xFF121212),
+                    appTheme?.cardBackground ?? const Color(0xFF1E1E1E)
+                  ]
+                : [const Color(0xFFFFFFFF), const Color(0xFFF7F7FF)],
+          ),
         ),
         child: Stack(
           children: [
@@ -298,7 +303,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   Expanded(
                     child: Consumer<AppProvider>(
                       builder: (context, appProvider, _) {
-                        // 🔥 اگه userId هنوز لود نشده، Loading نشون بده
                         if (appProvider.userId == null ||
                             appProvider.userId!.isEmpty) {
                           return const Center(
@@ -307,7 +311,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           );
                         }
 
-                        // 🔥 اگه userId هست ولی partnerId نیست، قفل کن
                         final hasPartner = appProvider.partnerId != null &&
                             appProvider.partnerId!.isNotEmpty;
 

@@ -7,6 +7,7 @@ import 'package:flutter_application_1/core/providers/calendar_provider.dart';
 import 'package:flutter_application_1/features/calendar/data/preset_moments.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:flutter_application_1/shared/services/notification_service.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class MomentSwipeCards extends StatelessWidget {
   const MomentSwipeCards({super.key});
@@ -20,8 +21,12 @@ class MomentSwipeCards extends StatelessWidget {
     void Function(String title) onActivitySelected,
   ) {
     const Color primaryPink = Color(0xFFFE4773);
-    const Color textDark = Color(0xFF1A1A2E);
     const Color selectedCardBg = Color.fromARGB(75, 255, 255, 255);
+
+    // 🔥 گرفتن AppTheme از context (متد استاتیک است ولی context دارد)
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final Color whiteBox = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
 
     final options = [
       {'icon': Icons.auto_awesome, 'title': 'سفارشی', 'emoji': '✨'},
@@ -53,7 +58,7 @@ class MomentSwipeCards extends StatelessWidget {
           width: 60,
           margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
-            color: isSelected ? selectedCardBg : Colors.white,
+            color: isSelected ? selectedCardBg : whiteBox, // 👈 پویا
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -69,7 +74,7 @@ class MomentSwipeCards extends StatelessWidget {
               Icon(
                 opt['icon'] as IconData,
                 size: 22,
-                color: isSelected ? primaryPink : Colors.grey.shade800,
+                color: isSelected ? primaryPink : Colors.grey.shade600,
               ),
               const SizedBox(height: 4),
               Text(
@@ -77,7 +82,7 @@ class MomentSwipeCards extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? primaryPink : textDark,
+                  color: isSelected ? primaryPink : textColor, // 👈 پویا
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -98,6 +103,9 @@ class MomentSwipeCards extends StatelessWidget {
 
     if (allMoments.isEmpty) return const SizedBox.shrink();
 
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       height: 100,
       child: ListView.builder(
@@ -106,17 +114,23 @@ class MomentSwipeCards extends StatelessWidget {
         itemCount: allMoments.length,
         itemBuilder: (ctx, index) {
           final moment = allMoments[index];
-          return _buildMomentCard(context, moment, mp);
+          return _buildMomentCard(context, moment, mp,
+              appTheme: appTheme, isDark: isDark);
         },
       ),
     );
   }
 
   static Widget _buildMomentCard(
-      BuildContext context, Moment moment, MomentProvider mp) {
+    BuildContext context,
+    Moment moment,
+    MomentProvider mp, {
+    AppTheme? appTheme,
+    bool isDark = false,
+  }) {
+    // رنگ بنفش برند
     const Color purple = Color(0xFF862AF5);
 
-    // ⚡️ روش پایدار: تبدیل به میلادی UTC و کم کردن
     DateTime toMidnightUtc(Jalali j) {
       final d = j.toDateTime();
       return DateTime.utc(d.year, d.month, d.day);
@@ -148,7 +162,10 @@ class MomentSwipeCards extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
         decoration: BoxDecoration(
-          color: purple.withOpacity(0.08),
+          // پس‌زمینه: در روشن بنفش کمرنگ، در تاریک رنگ کارت
+          color: isDark
+              ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+              : purple.withOpacity(0.08),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -175,10 +192,10 @@ class MomentSwipeCards extends StatelessWidget {
                     moment.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A2E),
+                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -223,15 +240,12 @@ class MomentSwipeCards extends StatelessWidget {
     TimeOfDay? selectedTime = moment.reminderTime;
     final momentProvider = context.read<MomentProvider>();
 
-    // 🔥 برای مربع‌های افقی فعالیت
     final _searchController = TextEditingController();
-    final Set<String> _selectedTitles = {}; // برای مناسبت‌ها در صورت نیاز
-    String? selectedActivity; // برای هایلایت مربع
+    final Set<String> _selectedTitles = {};
+    String? selectedActivity;
 
     const Color primaryPink = Color(0xFFFE4773);
     const Color primaryPurple = Color(0xFF862AF5);
-    const Color textDark = Color(0xFF1A1A2E);
-    const Color textGrey = Color(0xFF8E8E98);
 
     showModalBottomSheet(
       context: context,
@@ -239,15 +253,25 @@ class MomentSwipeCards extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) {
+          // 🔥 دریافت تم
+          final appTheme = Theme.of(context).extension<AppTheme>();
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
+          final Color bgColor = appTheme?.cardBackground ?? Colors.white;
+          final Color textColor =
+              appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+          final Color hintColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
+          final Color whiteBox = appTheme?.cardBackground ?? Colors.white;
+
           return DraggableScrollableSheet(
             initialChildSize: 0.9,
             minChildSize: 0.5,
             maxChildSize: 0.95,
             builder: (ctx, scrollController) {
               return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(28),
                     topRight: Radius.circular(28),
                   ),
@@ -267,19 +291,21 @@ class MomentSwipeCards extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text('ویرایش لحظه ✨',
+                      Text('ویرایش لحظه ✨',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: textDark)),
+                              color: textColor)), // 👈 پویا
                       const SizedBox(height: 20),
 
                       // ─── نوع رویداد ───
-                      _buildSectionTitle('نوع رویداد', primaryPink),
+                      _buildSectionTitle('نوع رویداد', primaryPink,
+                          textColor: textColor),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           _buildCategoryCard(
+                            context, // 👈 اضافه شد
                             icon: Icons.event_available_rounded,
                             label: 'قرارها',
                             description: 'قرارهای عاشقانه، برنامه‌ها و...',
@@ -294,6 +320,7 @@ class MomentSwipeCards extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
                           _buildCategoryCard(
+                            context,
                             icon: Icons.celebration_rounded,
                             label: 'مناسبت‌ها',
                             description: 'تولد، سالگرد و...',
@@ -308,6 +335,7 @@ class MomentSwipeCards extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
                           _buildCategoryCard(
+                            context,
                             icon: Icons.favorite_rounded,
                             label: 'اولین‌ها',
                             description: 'نقاط عطف رابطه',
@@ -327,14 +355,14 @@ class MomentSwipeCards extends StatelessWidget {
                       // ─── فقط برای غیر مناسبت: مربع‌های فعالیت ───
                       if (selectedCategory != 'milestone') ...[
                         const SizedBox(height: 8),
-                        const Align(
+                        Align(
                           alignment: Alignment.centerRight,
                           child: Text(
                             'چی رو میخوای ثبت کنی؟',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: textDark,
+                              color: textColor,
                             ),
                           ),
                         ),
@@ -348,11 +376,11 @@ class MomentSwipeCards extends StatelessWidget {
                               context,
                               setSheetState,
                               titleController,
-                              (emoji) => setSheetState(() =>
-                                  selectedEmoji = emoji), // 👈 با setSheetState
+                              (emoji) =>
+                                  setSheetState(() => selectedEmoji = emoji),
                               selectedActivity,
-                              (title) => setSheetState(() => selectedActivity =
-                                  title), // 👈 با setSheetState
+                              (title) =>
+                                  setSheetState(() => selectedActivity = title),
                             ),
                           ),
                         ),
@@ -360,19 +388,20 @@ class MomentSwipeCards extends StatelessWidget {
                       ],
 
                       // ─── عنوان رویداد ───
-                      _buildSectionTitle('عنوان رویداد', primaryPink),
+                      _buildSectionTitle('عنوان رویداد', primaryPink,
+                          textColor: textColor),
                       const SizedBox(height: 8),
                       _buildTitleField(
-                          titleController, primaryPink, textGrey, textDark),
+                          titleController, primaryPink, hintColor, textColor,
+                          boxColor: whiteBox), // 👈 اضافه کردن boxColor
                       const SizedBox(height: 16),
 
-                      // ⚠️ بخش انتخاب ایموجی حذف شد
-
                       // ─── تاریخ رویداد ───
-                      _buildSectionTitle('تاریخ رویداد', primaryPink),
+                      _buildSectionTitle('تاریخ رویداد', primaryPink,
+                          textColor: textColor),
                       const SizedBox(height: 8),
                       _buildDatePickerCard(
-                          selectedDate, primaryPink, textDark, textGrey,
+                          selectedDate, primaryPink, textColor, hintColor,
                           () async {
                         final picked = await showPersianDatePicker(
                           context: context,
@@ -383,14 +412,15 @@ class MomentSwipeCards extends StatelessWidget {
                         );
                         if (picked != null)
                           setSheetState(() => selectedDate = picked);
-                      }),
+                      }, boxColor: whiteBox), // 👈 اضافه کردن boxColor
                       const SizedBox(height: 14),
 
                       // ─── زمان رویداد ───
-                      _buildSectionTitle('زمان رویداد', primaryPink),
+                      _buildSectionTitle('زمان رویداد', primaryPink,
+                          textColor: textColor),
                       const SizedBox(height: 8),
                       _buildTimePickerCard(
-                          selectedTime, primaryPink, textDark, textGrey,
+                          selectedTime, primaryPink, textColor, hintColor,
                           () async {
                         final time = await showTimePicker(
                           context: context,
@@ -407,7 +437,7 @@ class MomentSwipeCards extends StatelessWidget {
                         );
                         if (time != null)
                           setSheetState(() => selectedTime = time);
-                      }),
+                      }, boxColor: whiteBox), // 👈 اضافه کردن boxColor
                       const SizedBox(height: 14),
 
                       // ─── تنظیمات ───
@@ -420,8 +450,9 @@ class MomentSwipeCards extends StatelessWidget {
                             setSheetState(() => isPrivate = v),
                         primaryPink: primaryPink,
                         primaryPurple: primaryPurple,
-                        textDark: textDark,
-                        textGrey: textGrey,
+                        textDark: textColor,
+                        textGrey: hintColor,
+                        boxColor: whiteBox, // 👈 اضافه شدن
                       ),
                       const SizedBox(height: 20),
 
@@ -513,7 +544,8 @@ class MomentSwipeCards extends StatelessWidget {
 
 // ────────── توابع کمکی UI ──────────
 
-  static Widget _buildSectionTitle(String title, Color dotColor) {
+  static Widget _buildSectionTitle(String title, Color dotColor,
+      {Color textColor = const Color(0xFF1A1A2E)}) {
     return Row(
       children: [
         Container(
@@ -527,17 +559,19 @@ class MomentSwipeCards extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E),
+            color: textColor,
           ),
         ),
       ],
     );
   }
 
-  static Widget _buildCategoryCard({
+  static Widget _buildCategoryCard(
+    BuildContext context, {
+    // 👈 context اجباری شد
     required IconData icon,
     required String label,
     required String description,
@@ -545,6 +579,8 @@ class MomentSwipeCards extends StatelessWidget {
     required String selectedCategory,
     required VoidCallback onTap,
   }) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final Color cardBgColor = appTheme?.cardBackground ?? Colors.white;
     final isSelected = selectedCategory == category;
     return Expanded(
       child: GestureDetector(
@@ -557,7 +593,7 @@ class MomentSwipeCards extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? const Color.fromARGB(75, 255, 255, 255)
-                  : Colors.white,
+                  : cardBgColor, // 👈 پویا
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color:
@@ -640,10 +676,11 @@ class MomentSwipeCards extends StatelessWidget {
   }
 
   static Widget _buildTitleField(
-      TextEditingController controller, Color primary, Color grey, Color dark) {
+      TextEditingController controller, Color primary, Color grey, Color dark,
+      {Color boxColor = Colors.white}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: boxColor, // 👈
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -667,7 +704,7 @@ class MomentSwipeCards extends StatelessWidget {
           hintText: 'مثلاً: قرار کافه، رفتن به سینما...',
           hintStyle: TextStyle(color: grey.withOpacity(0.5), fontSize: 13),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: boxColor, // 👈
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -678,45 +715,15 @@ class MomentSwipeCards extends StatelessWidget {
     );
   }
 
-  static Widget _buildEmojiPicker(
-      String selectedEmoji, ValueChanged<String> onSelected, Color primary) {
-    const emojis = ['🎉', '💎', '💋', '❤️', '🌟', '🎂', '✈️', '🍿', '💍', '🏠'];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: emojis.map((emoji) {
-        final isSelected = emoji == selectedEmoji;
-        return GestureDetector(
-          onTap: () => onSelected(emoji),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isSelected
-                  ? const Color.fromARGB(75, 255, 255, 255)
-                  : Colors.transparent,
-              border: Border.all(
-                color: isSelected ? primary : Colors.grey.shade300,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 18))),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   static Widget _buildDatePickerCard(
-      Jalali date, Color primary, Color dark, Color grey, VoidCallback onTap) {
+      Jalali date, Color primary, Color dark, Color grey, VoidCallback onTap,
+      {Color boxColor = Colors.white}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: boxColor, // 👈
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -741,13 +748,14 @@ class MomentSwipeCards extends StatelessWidget {
   }
 
   static Widget _buildTimePickerCard(TimeOfDay? time, Color primary, Color dark,
-      Color grey, VoidCallback onTap) {
+      Color grey, VoidCallback onTap,
+      {Color boxColor = Colors.white}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: boxColor, // 👈
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -785,11 +793,12 @@ class MomentSwipeCards extends StatelessWidget {
     required Color primaryPurple,
     required Color textDark,
     required Color textGrey,
+    Color boxColor = Colors.white, // 👈 پارامتر جدید
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: boxColor, // 👈
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -890,28 +899,37 @@ class MomentSwipeCards extends StatelessWidget {
 
   static void _showDeleteMomentDialog(BuildContext context, Moment moment) {
     if (moment.id == null) return;
+    final appTheme = Theme.of(context).extension<AppTheme>();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(children: [
-          Icon(Icons.delete_outline, color: Color(0xFFE8456B), size: 24),
-          SizedBox(width: 8),
+        backgroundColor: appTheme?.cardBackground ?? Colors.white,
+        title: Row(children: [
+          const Icon(Icons.delete_outline, color: Color(0xFFE8456B), size: 24),
+          const SizedBox(width: 8),
           Text('حذف لحظه',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: appTheme?.textPrimary ?? const Color(0xFF1A1A2E))),
         ]),
         content: Text('«${moment.title}» برای همیشه حذف میشه. مطمئنی؟',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF8E8E98))),
+            style: TextStyle(
+                fontSize: 13,
+                color: appTheme?.textHint ?? const Color(0xFF8E8E98))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('بیخیال',
-                  style: TextStyle(color: Color(0xFF8E8E98), fontSize: 13))),
+              child: Text('بیخیال',
+                  style: TextStyle(
+                      color: appTheme?.textHint ?? const Color(0xFF8E8E98),
+                      fontSize: 13))),
           ElevatedButton(
             onPressed: () async {
               await context.read<MomentProvider>().deleteMoment(moment.id!);
-              Navigator.pop(ctx); // اول دیالوگ رو ببند
-              Navigator.pop(context); // بعد برگه ویرایش رو ببند
+              Navigator.pop(ctx);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE8456B),

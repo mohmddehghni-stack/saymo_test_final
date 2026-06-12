@@ -6,6 +6,7 @@ import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
 import 'event_banner.dart';
 import 'event_data.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class CalendarHeader extends StatelessWidget {
   final EventData? currentEvent;
@@ -24,7 +25,11 @@ class CalendarHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cp = context.watch<CalendarProvider>();
-    final appProvider = context.watch<AppProvider>(); // 🔥 اینجا بگیر
+    final appProvider = context.watch<AppProvider>();
+
+    // 🔥 گرفتن تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final EventData? displayEvent;
     if (currentEvent != null) {
@@ -36,11 +41,21 @@ class CalendarHeader extends StatelessWidget {
     }
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE8456B), AppColors.primary, Color(0xFFFF8E9E)],
+          colors: isDark
+              ? [
+                  appTheme?.surfaceBackground ?? const Color(0xFF121212),
+                  appTheme?.cardBackground ?? const Color(0xFF1E1E1E),
+                  const Color(0xFF2A0A2E), // یه ته‌رنگ بنفش تیره
+                ]
+              : [
+                  const Color(0xFFE8456B),
+                  AppColors.primary,
+                  const Color(0xFFFF8E9E),
+                ],
         ),
       ),
       child: Container(
@@ -56,7 +71,7 @@ class CalendarHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _buildDateDisplay(cp)),
-                _buildAvatars(cp, appProvider), // 🔥 پاس بده
+                _buildAvatars(cp, appProvider),
               ],
             ),
             const SizedBox(height: 14),

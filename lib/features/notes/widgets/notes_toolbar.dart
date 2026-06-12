@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class NotesToolbar extends StatelessWidget {
   final bool isEditMode;
   final bool isDeleteMode;
   final VoidCallback onNewNote;
   final VoidCallback onToggleEdit;
-  final VoidCallback onToggleDelete; // 🔥 فعال کردن حالت حذف
-  final VoidCallback onConfirmDelete; // 🔥 تأیید حذف تیک‌دارها
-  final VoidCallback onToggleTick; // 🔥 فعال کردن حالت تیک (بدون حذف)
+  final VoidCallback onToggleDelete;
+  final VoidCallback onConfirmDelete;
+  final VoidCallback onToggleTick;
   final bool isTickMode;
 
   const NotesToolbar({
@@ -25,34 +26,44 @@ class NotesToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color toolbarBg = appTheme?.cardBackground?.withOpacity(0.95) ??
+        Colors.white.withValues(alpha: 0.9);
+    final Color defaultButtonTextColor = appTheme?.textPrimary ??
+        const Color(0xFF1A1A2E); // جایگزین قهوه‌ای قدیمی
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      color: Colors.white.withValues(alpha: 0.9),
+      color: toolbarBg, // 👈 پس‌زمینه نیمه‌شفاف با تم هماهنگ
       child: Row(
         children: [
-          // ➕ جدید
-          _toolButton(Icons.note_add, 'جدید', onTap: onNewNote),
+          _toolButton(
+            Icons.note_add,
+            'جدید',
+            onTap: onNewNote,
+            defaultColor: defaultButtonTextColor,
+          ),
           const SizedBox(width: 8),
-
-          // ✏️ ویرایش
           _toolButton(
             Icons.edit,
             'ویرایش',
             isActive: isEditMode,
             onTap: onToggleEdit,
+            defaultColor: defaultButtonTextColor,
           ),
           const SizedBox(width: 8),
-
-          // ✅ تیک (خط زدن)
           _toolButton(
             isTickMode ? Icons.check_circle : Icons.check_circle_outline,
             'تیک',
             isActive: isTickMode,
             onTap: onToggleTick,
+            defaultColor: defaultButtonTextColor,
           ),
           const Spacer(),
-
-          // 🗑️ حذف (یا تأیید حذف)
           if (isDeleteMode)
             _toolButton(
               Icons.check_rounded,
@@ -60,6 +71,7 @@ class NotesToolbar extends StatelessWidget {
               isRed: true,
               isActive: true,
               onTap: onConfirmDelete,
+              defaultColor: defaultButtonTextColor,
             )
           else
             _toolButton(
@@ -67,6 +79,7 @@ class NotesToolbar extends StatelessWidget {
               'حذف',
               isRed: true,
               onTap: onToggleDelete,
+              defaultColor: defaultButtonTextColor,
             ),
         ],
       ),
@@ -79,17 +92,34 @@ class NotesToolbar extends StatelessWidget {
     bool isRed = false,
     bool isActive = false,
     VoidCallback? onTap,
+    Color defaultColor = const Color(0xFF1A1A2E), // رنگ پیش‌فرض متناسب با تم
   }) {
+    // رنگ آیکن و متن
+    Color buttonColor;
+    if (isActive) {
+      buttonColor = AppColors.primaryDark; // بنفش/صورتی برند
+    } else if (isRed) {
+      buttonColor = Colors.red;
+    } else {
+      buttonColor = defaultColor; // پویا: در روشن تیره، در تاریک روشن
+    }
+
+    // رنگ پس‌زمینه دکمه (شفاف بر اساس وضعیت)
+    Color? bgColor;
+    if (isActive) {
+      bgColor = AppColors.primaryDark.withOpacity(0.2);
+    } else if (isRed) {
+      bgColor = Colors.red.withOpacity(0.1);
+    } else {
+      bgColor = AppColors.primary.withOpacity(0.1);
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.primaryDark.withValues(alpha: 0.2)
-              : isRed
-                  ? Colors.red.withValues(alpha: 0.1)
-                  : AppColors.primary.withValues(alpha: 0.1),
+          color: bgColor,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -98,9 +128,7 @@ class NotesToolbar extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: isActive
-                  ? AppColors.primaryDark
-                  : (isRed ? Colors.red : const Color(0xFF5D4037)),
+              color: buttonColor,
             ),
             const SizedBox(width: 4),
             Text(
@@ -108,9 +136,7 @@ class NotesToolbar extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Vazir',
                 fontSize: 10,
-                color: isActive
-                    ? AppColors.primaryDark
-                    : (isRed ? Colors.red : const Color(0xFF5D4037)),
+                color: buttonColor,
               ),
             ),
           ],

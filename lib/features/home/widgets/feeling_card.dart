@@ -3,6 +3,7 @@ import 'package:flutter_application_1/shared/services/couple_service.dart';
 import 'package:flutter_application_1/core/providers/couple_cache_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_emoji/animated_emoji.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class FeelingCard extends StatefulWidget {
   final int value;
@@ -23,6 +24,8 @@ class _FeelingCardState extends State<FeelingCard> {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (!widget.showEmojis) {
       return _buildPartnerCard(context);
     }
@@ -33,11 +36,13 @@ class _FeelingCardState extends State<FeelingCard> {
   // 🔥 کارت خودم (تم صورتی)
   // =============================================
   Widget _buildMyCard() {
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cache = context.watch<CoupleCacheProvider>();
     return Container(
       height: 240,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appTheme?.cardBackground ?? Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -53,10 +58,10 @@ class _FeelingCardState extends State<FeelingCard> {
           Container(
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Color(0xFFF5F5F5),
+                  color: isDark ? Colors.white10 : const Color(0xFFF5F5F5),
                   width: 1,
                 ),
               ),
@@ -104,6 +109,7 @@ class _FeelingCardState extends State<FeelingCard> {
   // 🔥 کارت پارتنر (تم بنفش)
   // =============================================
   Widget _buildPartnerCard(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     final cache = context.watch<CoupleCacheProvider>();
     _checkMissYou(cache, context);
 
@@ -134,7 +140,7 @@ class _FeelingCardState extends State<FeelingCard> {
     return Container(
       height: 240,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appTheme?.cardBackground ?? Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -227,7 +233,7 @@ class _FeelingCardState extends State<FeelingCard> {
                           'هنوز حسی اعلام نکرده...',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade500,
+                            color: appTheme?.textHint ?? Colors.grey.shade500,
                           ),
                         ),
                       ],
@@ -272,6 +278,7 @@ class _FeelingCardState extends State<FeelingCard> {
   // 🔥 دیالوگ ارسال حس (با رنگ داده شده)
   // =============================================
   void _showConfirmDialog(int index, Color themeColor) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     final feelingNames = [
       'خوشحالم 😊',
       'ناراحتم 😢',
@@ -293,7 +300,7 @@ class _FeelingCardState extends State<FeelingCard> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
+        backgroundColor: appTheme?.cardBackground ?? Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -301,8 +308,10 @@ class _FeelingCardState extends State<FeelingCard> {
             children: [
               AnimatedEmoji(feelingEmojis[index], size: 70),
               const SizedBox(height: 16),
-              const Text('می‌خوای بهش بگی:',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF1A1A2E))),
+              Text('می‌خوای بهش بگی:',
+                  style: TextStyle(
+                      fontSize: 16,
+                      color: appTheme?.textPrimary ?? const Color(0xFF1A1A2E))),
               const SizedBox(height: 8),
               Text('«${feelingNames[index]}»',
                   style: TextStyle(
@@ -310,16 +319,20 @@ class _FeelingCardState extends State<FeelingCard> {
                       fontWeight: FontWeight.bold,
                       color: themeColor)),
               const SizedBox(height: 8),
-              const Text('این حس برای عشقت ارسال بشه؟',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF8E8E98))),
+              Text('این حس برای عشقت ارسال بشه؟',
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: appTheme?.textHint ?? const Color(0xFF8E8E98))),
               const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey,
-                          side: BorderSide(color: Colors.grey.shade300),
+                          foregroundColor: appTheme?.textHint ?? Colors.grey,
+                          side: BorderSide(
+                              color: (appTheme?.textHint ?? Colors.grey)
+                                  .withOpacity(0.3)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                           padding: const EdgeInsets.symmetric(vertical: 14)),

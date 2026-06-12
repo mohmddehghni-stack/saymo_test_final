@@ -21,16 +21,23 @@ class ProfileIdCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).extension<AppTheme>()!;
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color cardBg = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color shadowColor = appTheme?.shadowColor ?? const Color(0x0F000000);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor,
+            color: shadowColor,
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -57,7 +64,7 @@ class ProfileIdCard extends StatelessWidget {
                   fontFamily: 'Vazir',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: theme.textPrimary,
+                  color: textColor,
                 ),
               ),
             ],
@@ -101,7 +108,8 @@ class ProfileIdCard extends StatelessWidget {
                       const Text('کپی', style: TextStyle(fontFamily: 'Vazir')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: theme.cardBackground,
+                    // 👇 رنگ متن دکمه: در هر دو تم سفید بماند (خوانا)
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -112,7 +120,6 @@ class ProfileIdCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // 🔥 Share واقعی
                     Share.share(
                         'آیدی من توی سایمو: $publicId\nبا این آیدی می‌تونی بهم وصل بشی! 💕');
                   },

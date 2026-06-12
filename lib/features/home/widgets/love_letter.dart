@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/services/couple_service.dart';
 import 'package:flutter_application_1/shared/services/socket_service.dart';
 import 'package:flutter_application_1/shared/services/api_service.dart';
@@ -7,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/providers/couple_cache_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class LoveLetter extends StatefulWidget {
   const LoveLetter({super.key});
@@ -26,224 +26,22 @@ class _LoveLetterState extends State<LoveLetter>
 
   List<Map<String, dynamic>> _letters = [];
 
-  // رنگ‌های برند
+  // رنگ‌های برند (ثابت می‌مونن)
   static const Color primaryPink = Color(0xFFFE4773);
   static const Color primaryPurple = Color(0xFF862AF5);
-  static const Color surfaceWhite = Colors.white;
-  static const Color textDark = Color(0xFF1A1A2E);
-  static const Color textGrey = Color(0xFF8E8E98);
-  static const Color softPinkBg = Color(0xFFFDF4F5);
-  static const Color softPurpleBg = Color(0xFFF2E8FF);
-  static const Color letterBg = Color(0xFFF9FA);
+  // رنگ‌های پیش‌فرض روشن (برای حالت null امن)
+  static const Color fallbackWhite = Colors.white;
+  static const Color fallbackDarkText = Color(0xFF1A1A2E);
+  static const Color fallbackGreyText = Color(0xFF8E8E98);
 
-  Future<void> _loadLetters() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiService.baseUrl}/couple/love-letters'),
-        headers: {'Authorization': 'Bearer ${ApiService.token}'},
-      );
-      if (response.statusCode == 200 && mounted) {
-        final data = jsonDecode(response.body);
-        setState(() =>
-            _letters = List<Map<String, dynamic>>.from(data['letters'] ?? []));
-      }
-    } catch (e) {}
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    _animController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.02).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
-    );
-
-    _loadLetters();
-    SocketService.addHandler(_handleLoveLetter);
-  }
-
-  @override
-  void dispose() {
-    SocketService.removeHandler(_handleLoveLetter);
-    _controller.dispose();
-    _animController.dispose();
-    super.dispose();
-  }
-
-  void _handleLoveLetter(Map<String, dynamic> data) {
-    if (data['action'] == 'love_letter_received') {
-      if (!mounted) return;
-      _loadLetters();
-      _showReceivedDialog(data['text'] ?? '');
-    }
-  }
-
-  void _toggleEnvelope() {
-    setState(() {
-      _isOpen = !_isOpen;
-      if (_isOpen) {
-        _animController.forward();
-      } else {
-        _animController.reverse();
-      }
-    });
-  }
-
-  void _showReceivedDialog(String text) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: surfaceWhite,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.5, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: Container(
-                      height: 70,
-                      width: 70,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: [primaryPink, primaryPurple]),
-                        shape: BoxShape.circle,
-                      ),
-                      child:
-                          const Icon(Icons.mail, color: Colors.white, size: 35),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              const Text('📨 یه نامه برات اومد!',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textDark)),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: softPurpleBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                      fontSize: 14, color: textDark, height: 1.5),
-                  textDirection: TextDirection.rtl,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryPink,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('خوندم ❤️',
-                      style: TextStyle(fontSize: 16, color: Colors.white)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _sendLetter() {
-    if (_controller.text.trim().isEmpty) return;
-
-    CoupleService.sendLoveLetter(_controller.text.trim());
-
-    setState(() => _isSent = true);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: surfaceWhite,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 70,
-                  width: 70,
-                  decoration: const BoxDecoration(
-                    gradient:
-                        LinearGradient(colors: [primaryPink, primaryPurple]),
-                    shape: BoxShape.circle,
-                  ),
-                  child:
-                      const Icon(Icons.favorite, color: Colors.white, size: 35),
-                ),
-                const SizedBox(height: 16),
-                const Text('نامه‌ات ارسال شد! 💌',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textDark)),
-                const SizedBox(height: 8),
-                const Text('عشقت به دستش می‌رسه... 🕊️',
-                    style: TextStyle(fontSize: 13, color: textGrey)),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryPink,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      if (mounted) {
-                        setState(() {
-                          _isOpen = false;
-                          _isSent = false;
-                        });
-                        _controller.clear();
-                      }
-                    },
-                    child: const Text('باشه 😊',
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // ...
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 گرفتن AppTheme و وضعیت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: _isOpen ? null : _toggleEnvelope,
       child: AnimatedBuilder(
@@ -253,7 +51,15 @@ class _LoveLetterState extends State<LoveLetter>
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: _isOpen ? letterBg : softPinkBg,
+            // پس‌زمینه: در حالت باز از letterBg (کاغذی)، در حالت بسته از softPinkBg
+            // در تم تاریک هر دو به cardBackground تبدیل می‌شوند
+            color: _isOpen
+                ? (isDark
+                    ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+                    : const Color(0xFFF9FA))
+                : (isDark
+                    ? (appTheme?.cardBackground ?? const Color(0xFF1E1E1E))
+                    : const Color(0xFFFDF4F5)),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -268,8 +74,15 @@ class _LoveLetterState extends State<LoveLetter>
     );
   }
 
+  // =============================================
+  // پاکت بسته
+  // =============================================
   Widget _buildClosedEnvelope() {
+    // داخل این متد هم از Theme استفاده می‌کنیم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cache = context.read<CoupleCacheProvider>();
+
     return Container(
       height: 90,
       padding: const EdgeInsets.all(16),
@@ -285,7 +98,7 @@ class _LoveLetterState extends State<LoveLetter>
             child: const Icon(Icons.favorite, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -294,13 +107,16 @@ class _LoveLetterState extends State<LoveLetter>
                     style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: textDark)),
-                SizedBox(height: 4),
+                        color: appTheme?.textPrimary ?? fallbackDarkText)),
+                const SizedBox(height: 4),
                 Text('برای نوشتن کلیک کن... ✍️',
-                    style: TextStyle(fontSize: 11, color: textGrey)),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: appTheme?.textHint ?? fallbackGreyText)),
               ],
             ),
           ),
+          // دکمه پاکت (بدون تغییر)
           GestureDetector(
             onTap: () {
               cache.markLettersRead();
@@ -359,16 +175,194 @@ class _LoveLetterState extends State<LoveLetter>
     );
   }
 
+  // =============================================
+  // دریافت نامه (دیالوگ)
+  // =============================================
+  void _showReceivedDialog(String text) {
+    // این متد context خود State رو داره، پس می‌تونیم مستقیماً Theme رو بگیریم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: appTheme?.cardBackground ?? fallbackWhite,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.5, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      height: 70,
+                      width: 70,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: [primaryPink, primaryPurple]),
+                        shape: BoxShape.circle,
+                      ),
+                      child:
+                          const Icon(Icons.mail, color: Colors.white, size: 35),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Text('📨 یه نامه برات اومد!',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: appTheme?.textPrimary ?? fallbackDarkText)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  // پس‌زمینه نامه: در تم روشن بنفش کمرنگ، در تم تاریک یه رنگ تیره‌تر
+                  color: appTheme != null
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? primaryPurple.withOpacity(0.1)
+                          : const Color(0xFFF2E8FF))
+                      : const Color(0xFFF2E8FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: appTheme?.textPrimary ?? fallbackDarkText,
+                      height: 1.5),
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryPink,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('خوندم ❤️',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =============================================
+  // ارسال نامه
+  // =============================================
+  void _sendLetter() {
+    if (_controller.text.trim().isEmpty) return;
+
+    CoupleService.sendLoveLetter(_controller.text.trim());
+
+    setState(() => _isSent = true);
+
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: appTheme?.cardBackground ?? fallbackWhite,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 70,
+                  width: 70,
+                  decoration: const BoxDecoration(
+                    gradient:
+                        LinearGradient(colors: [primaryPink, primaryPurple]),
+                    shape: BoxShape.circle,
+                  ),
+                  child:
+                      const Icon(Icons.favorite, color: Colors.white, size: 35),
+                ),
+                const SizedBox(height: 16),
+                Text('نامه‌ات ارسال شد! 💌',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: appTheme?.textPrimary ?? fallbackDarkText)),
+                const SizedBox(height: 8),
+                Text('عشقت به دستش می‌رسه... 🕊️',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: appTheme?.textHint ?? fallbackGreyText)),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryPink,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      if (mounted) {
+                        setState(() {
+                          _isOpen = false;
+                          _isSent = false;
+                        });
+                        _controller.clear();
+                      }
+                    },
+                    child: const Text('باشه 😊',
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // =============================================
+  // لیست نامه‌ها (BottomSheet)
+  // =============================================
   void _showLettersList() {
     final cache = context.read<CoupleCacheProvider>();
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent, // مهم: برای پس‌زمینه شفاف
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return Container(
           height: 400,
+          decoration: BoxDecoration(
+            color: appTheme?.cardBackground ?? fallbackWhite,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
@@ -380,11 +374,11 @@ class _LoveLetterState extends State<LoveLetter>
                     borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(height: 16),
-              const Text('💌 نامه‌های دریافتی',
+              Text('💌 نامه‌های دریافتی',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: textDark)),
+                      color: appTheme?.textPrimary ?? fallbackDarkText)),
               const SizedBox(height: 16),
               Expanded(
                   child: _letters.isEmpty
@@ -395,8 +389,10 @@ class _LoveLetterState extends State<LoveLetter>
                               const Text('📭', style: TextStyle(fontSize: 48)),
                               const SizedBox(height: 8),
                               Text('هنوز نامه‌ای نداری',
-                                  style:
-                                      TextStyle(fontSize: 14, color: textGrey)),
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: appTheme?.textHint ??
+                                          fallbackGreyText)),
                             ],
                           ),
                         )
@@ -411,7 +407,10 @@ class _LoveLetterState extends State<LoveLetter>
                                 margin: const EdgeInsets.only(bottom: 12),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: softPurpleBg,
+                                  color: isDark
+                                      ? (appTheme?.cardBackground ??
+                                          const Color(0xFF1E1E1E))
+                                      : const Color(0xFFF2E8FF),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
@@ -432,16 +431,21 @@ class _LoveLetterState extends State<LoveLetter>
                                         const Spacer(),
                                         Text(
                                           letter['created_at'] ?? '',
-                                          style: const TextStyle(
-                                              fontSize: 11, color: textGrey),
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: appTheme?.textHint ??
+                                                  fallbackGreyText),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
                                       letter['text'] ?? '',
-                                      style: const TextStyle(
-                                          fontSize: 15, height: 1.6),
+                                      style: TextStyle(
+                                          fontSize: 15,
+                                          height: 1.6,
+                                          color: appTheme?.textPrimary ??
+                                              fallbackDarkText),
                                       textDirection: TextDirection.rtl,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -461,6 +465,9 @@ class _LoveLetterState extends State<LoveLetter>
     cache.markLettersRead();
   }
 
+  // =============================================
+  // نامه تمام‌صفحه (بدون تغییر، رنگ‌ها ثابت هستند)
+  // =============================================
   void _showLetterDetail(Map<String, dynamic> letter) {
     Navigator.push(
       context,
@@ -474,7 +481,6 @@ class _LoveLetterState extends State<LoveLetter>
             animation: animation,
             builder: (context, child) {
               final value = animation.value;
-
               return GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Scaffold(
@@ -491,6 +497,20 @@ class _LoveLetterState extends State<LoveLetter>
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+    _loadLetters();
+    SocketService.addHandler(_handleLoveLetter);
+  }
+
   Widget _buildAnimatedEnvelope(Map<String, dynamic> letter, double value) {
     final scale = 0.5 + (value * 0.5);
     final opacity = value < 0.3 ? 0.0 : (value - 0.3) / 0.7;
@@ -503,7 +523,7 @@ class _LoveLetterState extends State<LoveLetter>
           width: MediaQuery.of(context).size.width * 0.9,
           constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFDF5),
+            color: const Color(0xFFFFFDF5), // رنگ کاغذ بدون تغییر
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
@@ -551,7 +571,7 @@ class _LoveLetterState extends State<LoveLetter>
                             style: const TextStyle(
                               fontSize: 16,
                               height: 2.0,
-                              color: textDark,
+                              color: fallbackDarkText,
                             ),
                             textDirection: TextDirection.rtl,
                           ),
@@ -593,6 +613,7 @@ class _LoveLetterState extends State<LoveLetter>
   }
 
   Widget _buildOpenEnvelope() {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -601,11 +622,11 @@ class _LoveLetterState extends State<LoveLetter>
             children: [
               const Icon(Icons.favorite, color: primaryPink, size: 18),
               const SizedBox(width: 8),
-              const Text('نامه من به تو...',
+              Text('نامه من به تو...',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: textDark)),
+                      color: appTheme?.textPrimary ?? fallbackDarkText)),
               const Spacer(),
               GestureDetector(
                 onTap: _toggleEnvelope,
@@ -646,11 +667,15 @@ class _LoveLetterState extends State<LoveLetter>
                     controller: _controller,
                     textDirection: TextDirection.rtl,
                     maxLines: 5,
-                    style: const TextStyle(
-                        fontSize: 14, color: textDark, height: 1.55),
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: appTheme?.textPrimary ?? fallbackDarkText,
+                        height: 1.55),
+                    decoration: InputDecoration(
                       hintText: 'از دل بنویس... ❤️',
-                      hintStyle: TextStyle(fontSize: 13, color: textGrey),
+                      hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: appTheme?.textHint ?? fallbackGreyText),
                       border: InputBorder.none,
                     ),
                   ),
@@ -697,5 +722,46 @@ class _LoveLetterState extends State<LoveLetter>
         ],
       ),
     );
+  }
+
+  void _toggleEnvelope() {
+    setState(() {
+      _isOpen = !_isOpen;
+      if (_isOpen) {
+        _animController.forward();
+      } else {
+        _animController.reverse();
+      }
+    });
+  }
+
+  Future<void> _loadLetters() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/couple/love-letters'),
+        headers: {'Authorization': 'Bearer ${ApiService.token}'},
+      );
+      if (response.statusCode == 200 && mounted) {
+        final data = jsonDecode(response.body);
+        setState(() =>
+            _letters = List<Map<String, dynamic>>.from(data['letters'] ?? []));
+      }
+    } catch (e) {}
+  }
+
+  void _handleLoveLetter(Map<String, dynamic> data) {
+    if (data['action'] == 'love_letter_received') {
+      if (!mounted) return;
+      _loadLetters();
+      _showReceivedDialog(data['text'] ?? '');
+    }
+  }
+
+  @override
+  void dispose() {
+    SocketService.removeHandler(_handleLoveLetter);
+    _controller.dispose();
+    _animController.dispose();
+    super.dispose();
   }
 }

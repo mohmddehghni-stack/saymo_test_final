@@ -3,19 +3,23 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/features/auth/pages/welcome_screen.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 void showLogoutDialog(BuildContext context) {
+  // 🔥 دریافت تم
+  final appTheme = Theme.of(context).extension<AppTheme>();
+
   showDialog(
     context: context,
     builder: (ctx) => Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: AppColors.surfacePrimary,
+      backgroundColor: appTheme?.cardBackground ??
+          AppColors.surfacePrimary, // 👈 پس‌زمینه پویا
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // آیکن
             Container(
               height: 64,
               width: 64,
@@ -27,22 +31,22 @@ void showLogoutDialog(BuildContext context) {
                   const Icon(Icons.logout_rounded, color: Colors.red, size: 32),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'خروج از حساب',
               style: TextStyle(
                 fontFamily: 'Vazir',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: appTheme?.textPrimary ?? AppColors.textPrimary, // 👈
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'آیا مطمئنی می‌خوای خارج بشی؟',
               style: TextStyle(
                 fontFamily: 'Vazir',
                 fontSize: 14,
-                color: AppColors.textHint,
+                color: appTheme?.textHint ?? AppColors.textHint, // 👈
               ),
             ),
             const SizedBox(height: 24),
@@ -52,7 +56,8 @@ void showLogoutDialog(BuildContext context) {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textPrimary,
+                      foregroundColor:
+                          appTheme?.textPrimary ?? AppColors.textPrimary,
                       side: BorderSide(color: Colors.grey.shade300),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
@@ -66,7 +71,7 @@ void showLogoutDialog(BuildContext context) {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(ctx); // بستن دیالوگ
+                      Navigator.pop(ctx);
                       context.read<AppProvider>().logout();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const WelcomePage()),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../../../../core/providers/period_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class PeriodSetupView extends StatelessWidget {
   final VoidCallback? onCompleted;
@@ -11,21 +12,29 @@ class PeriodSetupView extends StatelessWidget {
     this.onCompleted,
   });
 
-  // رنگ‌های برند
   static const Color primaryPink = Color(0xFFFE4773);
-  static const Color softBg = Color(0xFFFFF9FA); // پس‌زمینه ملایم
+  static const Color softBg = Color(0xFFFFF9FA);
 
   @override
   Widget build(BuildContext context) {
     final periodProvider = context.watch<PeriodProvider>();
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [softBg, Colors.white], // صورتی‌ خیلی کمرنگ → سفید
+            // پس‌زمینه: در روشن softBg → سفید، در تاریک سطح تیره → کارت تیره
+            colors: isDark
+                ? [
+                    appTheme?.surfaceBackground ?? const Color(0xFF121212),
+                    appTheme?.cardBackground ?? const Color(0xFF1E1E1E)
+                  ]
+                : [softBg, Colors.white],
           ),
         ),
         child: SafeArea(
@@ -37,34 +46,36 @@ class PeriodSetupView extends StatelessWidget {
                 const SizedBox(height: 20),
                 const Text('🌸', style: TextStyle(fontSize: 60)),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'یه چندتا سوال ساده...',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A2E), // مشکی ملایم
+                    color:
+                        appTheme?.textPrimary ?? const Color(0xFF1A1A2E), // 👈
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'برای اینکه بتونم کمکت کنم،\nلطفاً اطلاعات زیر رو وارد کن.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF8E8E98), // خاکستری ملایم
+                    color: appTheme?.textHint ?? const Color(0xFF8E8E98), // 👈
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // سوال ۱
-                const Text(
+                Text(
                   'آخرین پریودت کی شروع شد؟',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF1A1A2E),
+                    color:
+                        appTheme?.textPrimary ?? const Color(0xFF1A1A2E), // 👈
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -84,7 +95,7 @@ class PeriodSetupView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: appTheme?.cardBackground ?? Colors.white, // 👈
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -117,12 +128,13 @@ class PeriodSetupView extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // سوال ۲
-                const Text(
+                Text(
                   'معمولاً چند روز طول می‌کشه؟',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF1A1A2E),
+                    color:
+                        appTheme?.textPrimary ?? const Color(0xFF1A1A2E), // 👈
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -130,7 +142,7 @@ class PeriodSetupView extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: appTheme?.cardBackground ?? Colors.white, // 👈
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -169,12 +181,13 @@ class PeriodSetupView extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // سوال ۳
-                const Text(
+                Text(
                   'معمولاً هر چند روز یکبار پریود میشی؟',
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF1A1A2E),
+                    color:
+                        appTheme?.textPrimary ?? const Color(0xFF1A1A2E), // 👈
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -191,7 +204,7 @@ class PeriodSetupView extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: appTheme?.cardBackground ?? Colors.white, // 👈
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -358,8 +371,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
   late Jalali _selectedDate;
   late PageController _pageController;
 
-  static const Color primaryPink = Color(0xFFFE4773); // صورتی برند
-  static const Color softPink = Color(0xFFFFF9FA); // پس‌زمینه محو
+  static const Color primaryPink = Color(0xFFFE4773);
 
   @override
   void initState() {
@@ -404,16 +416,22 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 دریافت تم برای دیالوگ
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF333333);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
+      backgroundColor: cardColor, // 👈 پس‌زمینه دیالوگ
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(),
+            _buildHeader(textColor),
             const SizedBox(height: 16),
             _buildWeekDays(),
             const SizedBox(height: 8),
@@ -428,7 +446,8 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                     _selectedMonth = date.month;
                   });
                 },
-                itemBuilder: (context, page) => _buildCalendarGrid(page),
+                itemBuilder: (context, page) =>
+                    _buildCalendarGrid(page, textColor),
               ),
             ),
             const SizedBox(height: 16),
@@ -439,7 +458,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Color textColor) {
     const monthNames = [
       '',
       'فروردین',
@@ -455,6 +474,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
       'بهمن',
       'اسفند'
     ];
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -465,16 +485,16 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                 curve: Curves.easeInOut)),
         Column(children: [
           Text(monthNames[_selectedMonth],
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333))),
+                  color: textColor)), // 👈
           Text('$_selectedYear',
               style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 12,
-                  color: Colors.grey.shade500)),
+                  color: textColor.withOpacity(0.6))), // 👈
         ]),
         _navButton(
             Icons.chevron_left_rounded,
@@ -492,7 +512,9 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-            color: softPink, borderRadius: BorderRadius.circular(12)),
+            // پس‌زمینه دکمه‌های ناوبری
+            color: primaryPink.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: primaryPink, size: 22),
       ),
     );
@@ -500,6 +522,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
 
   Widget _buildWeekDays() {
     const days = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+    // تم رنگ روزهای هفته ثابت می‌ماند
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -523,7 +546,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
     );
   }
 
-  Widget _buildCalendarGrid(int page) {
+  Widget _buildCalendarGrid(int page, Color textColor) {
     final monthDate = _getMonthDate(page);
     final year = monthDate.year;
     final month = monthDate.month;
@@ -559,7 +582,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                 color: isSelected
                     ? primaryPink
                     : isToday
-                        ? softPink
+                        ? primaryPink.withOpacity(0.08) // 👈 امروز
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: isToday && !isSelected
@@ -581,7 +604,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                                   ? Colors.white
                                   : isToday
                                       ? primaryPink
-                                      : const Color(0xFF333333)))),
+                                      : textColor))), // 👈 روزهای معمولی
             ),
           );
         },

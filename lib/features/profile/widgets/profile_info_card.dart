@@ -21,17 +21,24 @@ class ProfileInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).extension<AppTheme>()!;
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color cardBg = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color hintColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
+    final Color shadowColor = appTheme?.shadowColor ?? const Color(0x0F000000);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor,
+            color: shadowColor,
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -55,12 +62,11 @@ class ProfileInfoCard extends StatelessWidget {
                     fontFamily: 'Vazir',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: theme.textPrimary)),
+                    color: textColor)),
           ]),
           const SizedBox(height: 16),
-          _infoRow(
-              context, theme, 'نام نمایشی', displayName, Icons.badge_outlined,
-              onTap: () {
+          _infoRow(context, 'نام نمایشی', displayName, Icons.badge_outlined,
+              hintColor: hintColor, textColor: textColor, onTap: () {
             showEditDialog(
               context: context,
               title: 'نام نمایشی',
@@ -72,9 +78,10 @@ class ProfileInfoCard extends StatelessWidget {
               },
             );
           }),
-          _divider(theme),
-          _infoRow(context, theme, 'نام کاربری', username,
-              Icons.alternate_email_outlined, onTap: () {
+          _divider(),
+          _infoRow(
+              context, 'نام کاربری', username, Icons.alternate_email_outlined,
+              hintColor: hintColor, textColor: textColor, onTap: () {
             showEditDialog(
               context: context,
               title: 'نام کاربری',
@@ -86,45 +93,49 @@ class ProfileInfoCard extends StatelessWidget {
               },
             );
           }),
-          _divider(theme),
-          _infoRow(context, theme, 'شماره تلفن', phone, Icons.phone_outlined),
-          _divider(theme),
+          _divider(),
+          _infoRow(context, 'شماره تلفن', phone, Icons.phone_outlined,
+              hintColor: hintColor, textColor: textColor),
+          _divider(),
           _infoRow(
             context,
-            theme,
             'جنسیت',
             gender == 'female' ? 'دختر 👧' : 'پسر 👦',
             gender == 'female' ? Icons.female_outlined : Icons.male_outlined,
+            hintColor: hintColor,
+            textColor: textColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _infoRow(BuildContext context, AppTheme theme, String label,
-      String value, IconData icon,
-      {VoidCallback? onTap}) {
+  Widget _infoRow(
+      BuildContext context, String label, String value, IconData icon,
+      {required Color hintColor,
+      required Color textColor,
+      VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: theme.textHint),
+            Icon(icon, size: 18, color: hintColor),
             const SizedBox(width: 10),
             Text(label,
                 style: TextStyle(
-                    fontFamily: 'Vazir', fontSize: 13, color: theme.textHint)),
+                    fontFamily: 'Vazir', fontSize: 13, color: hintColor)),
             const Spacer(),
             Text(value,
                 style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: theme.textPrimary)),
+                    color: textColor)),
             if (onTap != null) ...[
               const SizedBox(width: 4),
-              Icon(Icons.edit, size: 14, color: theme.textHint),
+              Icon(Icons.edit, size: 14, color: hintColor),
             ],
           ],
         ),
@@ -132,7 +143,7 @@ class ProfileInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _divider(AppTheme theme) {
+  Widget _divider() {
     return Container(height: 1, color: AppColors.primary.withOpacity(0.06));
   }
 }

@@ -34,14 +34,14 @@ class AppTheme extends ThemeExtension<AppTheme> {
   );
 
   static const dark = AppTheme(
-    cardBackground: Color(0xFF16213E),
-    surfaceBackground: Color(0xFF1A1A2E),
-    headerGradientStart: Color(0xFF0F3460),
-    headerGradientEnd: Color(0xFF1A1A2E),
+    cardBackground: Color(0xFF1E1E1E), // خاکستری خیلی تیره (جایگزین آبی)
+    surfaceBackground: Color(0xFF121212), // مشکی (جایگزین بنفش تیره)
+    headerGradientStart: Color(0xFF1A1A1A), // مشکی یکدست
+    headerGradientEnd: Color(0xFF1A1A1A), // مشکی یکدست
     textPrimary: Colors.white,
     textSecondary: Color(0xFFB0B0B0),
-    textHint: Color(0xFF666666),
-    shadowColor: Color(0x0FFFFFFF),
+    textHint: Color(0xFF888888),
+    shadowColor: Color(0x0FFFFFFF), // سایه سفید خیلی محو
   );
 
   @override

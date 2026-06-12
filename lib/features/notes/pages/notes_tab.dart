@@ -8,6 +8,7 @@ import '../widgets/notes_toolbar.dart';
 import '../widgets/notes_input_bar.dart';
 import '../widgets/notes_my_list.dart';
 import '../widgets/notes_partner_list.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
 
 class NotesTabContent extends StatefulWidget {
   const NotesTabContent({super.key});
@@ -19,9 +20,8 @@ class NotesTabContent extends StatefulWidget {
 class _NotesTabContentState extends State<NotesTabContent> {
   final TextEditingController _noteController = TextEditingController();
 
-  // 🔥 سه حالت مستقل
-  bool _isEditMode = false; // حالت ویرایش
-  bool _isDeleteMode = false; // حالت حذف (تیک)
+  bool _isEditMode = false;
+  bool _isDeleteMode = false;
   int? _editingId;
   bool _isTickMode = false;
 
@@ -42,11 +42,21 @@ class _NotesTabContentState extends State<NotesTabContent> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<NotesManagerProvider>();
+    // 🔥 دریافت تم
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // رنگ‌های پویا
+    final Color scaffoldBg =
+        appTheme?.surfaceBackground ?? const Color(0xFFF5F0E8);
+    final Color cardBg = appTheme?.cardBackground ?? Colors.white;
+    final Color textColor = appTheme?.textPrimary ?? const Color(0xFF1A1A2E);
+    final Color hintColor = appTheme?.textHint ?? const Color(0xFF8E8E98);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        color: const Color(0xFFF5F0E8),
+        color: scaffoldBg, // 👈 پس‌زمینه اصلی
         child: Stack(
           children: [
             Positioned.fill(child: CustomPaint(painter: NotesGridPainter())),
@@ -63,16 +73,16 @@ class _NotesTabContentState extends State<NotesTabContent> {
                 Container(
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
-                  color: AppColors.primaryDark.withValues(alpha: 0.3),
+                  color: AppColors.primaryDark.withOpacity(isDark ? 0.5 : 0.3),
                 ),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     child: NotesMyList(
                       notes: provider.myNotes,
-                      isTickMode: _isTickMode, // 🔥 حالت تیک (خط زدن)
-                      isEditMode: _isEditMode, // 🔥 حالت ویرایش
-                      isDeleteMode: _isDeleteMode, // 🔥 حالت حذف
+                      isTickMode: _isTickMode,
+                      isEditMode: _isEditMode,
+                      isDeleteMode: _isDeleteMode,
                       editingId: _editingId,
                       onTick: (id) => provider.toggleTickApi(id),
                       onEdit: (id) {
@@ -87,23 +97,27 @@ class _NotesTabContentState extends State<NotesTabContent> {
                     ),
                   ),
                 ),
-                // 🔥 نوار وضعیت (بالای Toolbar)
+                // نوار وضعیت ویرایش
                 if (_isEditMode)
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: AppColors.periodBackground,
+                    color: isDark
+                        ? AppColors.primaryDark.withOpacity(0.15)
+                        : AppColors.periodBackground,
                     child: Row(
                       children: [
                         const Icon(Icons.edit,
                             size: 16, color: AppColors.primaryDark),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'روی یادداشت بزن تا ویرایش کنی ✏️',
                           style: TextStyle(
-                              fontFamily: 'Vazir',
-                              fontSize: 12,
-                              color: AppColors.primaryDark),
+                            fontFamily: 'Vazir',
+                            fontSize: 12,
+                            color:
+                                isDark ? Colors.white70 : AppColors.primaryDark,
+                          ),
                         ),
                         const Spacer(),
                         GestureDetector(
@@ -121,11 +135,14 @@ class _NotesTabContentState extends State<NotesTabContent> {
                       ],
                     ),
                   ),
+                // نوار وضعیت حذف
                 if (_isDeleteMode)
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: const Color(0xFFFFF0F0),
+                    color: isDark
+                        ? Colors.red.withOpacity(0.1)
+                        : const Color(0xFFFFF0F0),
                     child: Row(
                       children: [
                         const Icon(Icons.delete_outline,
@@ -160,16 +177,22 @@ class _NotesTabContentState extends State<NotesTabContent> {
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
-                        title: const Text('پاک کردن همه',
-                            style:
-                                TextStyle(fontFamily: 'Vazir', fontSize: 16)),
-                        content: const Text('همه یادداشت‌ها پاک بشن؟',
-                            style:
-                                TextStyle(fontFamily: 'Vazir', fontSize: 14)),
+                        backgroundColor: cardBg, // 👈
+                        title: Text('پاک کردن همه',
+                            style: TextStyle(
+                                fontFamily: 'Vazir',
+                                fontSize: 16,
+                                color: textColor)),
+                        content: Text('همه یادداشت‌ها پاک بشن؟',
+                            style: TextStyle(
+                                fontFamily: 'Vazir',
+                                fontSize: 14,
+                                color: hintColor)),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(ctx),
-                              child: const Text('نه')),
+                              child: Text('نه',
+                                  style: TextStyle(color: hintColor))),
                           ElevatedButton(
                             onPressed: () {
                               provider.deleteAllNotes();
@@ -194,7 +217,6 @@ class _NotesTabContentState extends State<NotesTabContent> {
                     });
                   },
                   onToggleDelete: () {
-                    // 🔥 فعال کردن حالت حذف
                     setState(() {
                       _isDeleteMode = !_isDeleteMode;
                       _isEditMode = false;
@@ -205,22 +227,27 @@ class _NotesTabContentState extends State<NotesTabContent> {
                     });
                   },
                   onConfirmDelete: () {
-                    // 🔥 تأیید حذف
                     showDialog(
                       context: context,
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
-                        title: const Text('حذف',
-                            style:
-                                TextStyle(fontFamily: 'Vazir', fontSize: 16)),
-                        content: const Text('یادداشت‌های انتخاب‌شده حذف بشن؟',
-                            style:
-                                TextStyle(fontFamily: 'Vazir', fontSize: 14)),
+                        backgroundColor: cardBg, // 👈
+                        title: Text('حذف',
+                            style: TextStyle(
+                                fontFamily: 'Vazir',
+                                fontSize: 16,
+                                color: textColor)),
+                        content: Text('یادداشت‌های انتخاب‌شده حذف بشن؟',
+                            style: TextStyle(
+                                fontFamily: 'Vazir',
+                                fontSize: 14,
+                                color: hintColor)),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(ctx),
-                              child: const Text('نه')),
+                              child: Text('نه',
+                                  style: TextStyle(color: hintColor))),
                           ElevatedButton(
                             onPressed: () {
                               provider.deleteSelected();
@@ -237,7 +264,6 @@ class _NotesTabContentState extends State<NotesTabContent> {
                     );
                   },
                   onToggleTick: () {
-                    // 🔥 فقط تیک زدن
                     setState(() {
                       _isTickMode = !_isTickMode;
                       _isEditMode = false;
@@ -253,14 +279,12 @@ class _NotesTabContentState extends State<NotesTabContent> {
                     final text = _noteController.text.trim();
                     if (text.isNotEmpty) {
                       if (_editingId != null) {
-                        // 🔥 ویرایش یادداشت انتخاب شده
                         provider.updateNote(_editingId!, text);
                         setState(() {
                           _editingId = null;
                           _isEditMode = false;
                         });
                       } else {
-                        // 🔥 یادداشت جدید
                         provider.addNote(text);
                       }
                       _noteController.clear();

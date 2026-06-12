@@ -10,8 +10,8 @@ import 'moment_swipe_cards.dart';
 import 'notes_section.dart';
 import 'event_data.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class CalendarContent extends StatelessWidget {
   const CalendarContent({super.key});
@@ -114,6 +114,8 @@ class CalendarContent extends StatelessWidget {
   Widget _buildCalendar(BuildContext context, CalendarProvider cp) {
     final pp = context.read<PeriodProvider>();
     final appProvider = context.read<AppProvider>();
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isFemale = appProvider.gender == 'female';
 
@@ -162,7 +164,7 @@ class CalendarContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: cardBg,
+          color: appTheme?.cardBackground ?? cardBg,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.black.withOpacity(0.04)),
           boxShadow: [
@@ -189,8 +191,11 @@ class CalendarContent extends StatelessWidget {
                   }),
                   Text(
                     cp.monthName,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: appTheme?.textPrimary ?? Colors.black,
+                    ),
                   ),
                   _navButton(Icons.chevron_right_rounded, () {
                     if (cp.selectedMonth == 12) {
@@ -218,7 +223,7 @@ class CalendarContent extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: isFriday
                               ? primaryPink.withOpacity(0.7)
-                              : textGrey,
+                              : (appTheme?.textHint ?? textGrey), // 👈
                         ),
                       ),
                     ),

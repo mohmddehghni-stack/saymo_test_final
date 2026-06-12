@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart'; // اضافه شد
 
-/// نمایش دیالوگ ویرایش پروفایل
-///
-/// [context] - BuildContext
-/// [title] - عنوان فیلد (مثلاً "نام نمایشی")
-/// [currentValue] - مقدار فعلی
-/// [onSave] - callback بعد از ذخیره (مقدار جدید رو برمی‌گردونه)
 Future<void> showEditDialog({
   required BuildContext context,
   required String title,
@@ -20,15 +15,17 @@ Future<void> showEditDialog({
   return showDialog(
     context: context,
     builder: (dialogContext) {
+      final appTheme = Theme.of(context).extension<AppTheme>();
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+
       return Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
+        backgroundColor: appTheme?.cardBackground ?? Colors.white, // 👈
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // آیکون ویرایش
               Container(
                 height: 50,
                 width: 50,
@@ -43,29 +40,31 @@ Future<void> showEditDialog({
                 ),
               ),
               const SizedBox(height: 12),
-
-              // عنوان
               Text(
                 'ویرایش $title',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: appTheme?.textPrimary ?? AppColors.textPrimary, // 👈
                 ),
               ),
               const SizedBox(height: 16),
-
-              // فیلد ورودی
               TextField(
                 controller: controller,
                 textDirection: TextDirection.rtl,
                 obscureText: title == 'رمز عبور',
-                style: const TextStyle(fontFamily: 'Vazir', fontSize: 14),
+                style: TextStyle(
+                  fontFamily: 'Vazir',
+                  fontSize: 14,
+                  color: appTheme?.textPrimary, // 👈 متن ورودی
+                ),
                 decoration: InputDecoration(
                   hintText: '$title جدید',
                   filled: true,
-                  fillColor: const Color(0xFFF5F0E8),
+                  fillColor: isDark
+                      ? Colors.white10
+                      : const Color(0xFFF5F0E8), // 👈 پس‌زمینه فیلد
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -74,11 +73,8 @@ Future<void> showEditDialog({
                 ),
               ),
               const SizedBox(height: 20),
-
-              // دکمه‌ها
               Row(
                 children: [
-                  // انصراف
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(dialogContext),
@@ -87,6 +83,8 @@ Future<void> showEditDialog({
                           borderRadius: BorderRadius.circular(14),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        foregroundColor:
+                            appTheme?.textHint ?? Colors.grey, // 👈
                       ),
                       child: const Text(
                         'انصراف',
@@ -95,21 +93,16 @@ Future<void> showEditDialog({
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // ذخیره
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
                         final newValue = controller.text.trim();
                         if (newValue.isEmpty) return;
 
-                        // 🔥 دکمه رو غیرفعال کن
                         Navigator.pop(dialogContext);
 
                         try {
                           await onSave(newValue);
-
-                          // ✅ موفقیت
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -126,7 +119,6 @@ Future<void> showEditDialog({
                             );
                           }
                         } catch (e) {
-                          // ❌ خطا
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

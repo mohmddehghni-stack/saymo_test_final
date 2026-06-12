@@ -24,6 +24,7 @@ import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:flutter_application_1/core/services/event_bus.dart';
 import 'package:flutter_application_1/shared/services/socket_service.dart';
 import 'package:flutter_application_1/features/calendar/sheets/add_moment_sheet.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -38,7 +39,6 @@ class _CalendarPageState extends State<CalendarPage>
 
   late AnimationController _entranceAnim;
   late Animation<double> _fadeSlideAnimation;
-  final GlobalKey<SpeedFanFABState> _fabKey = GlobalKey<SpeedFanFABState>();
   bool _showBlur = false;
 
   Timer? _eventTimer;
@@ -51,6 +51,7 @@ class _CalendarPageState extends State<CalendarPage>
   @override
   void initState() {
     super.initState();
+
     _setupAnimations();
     _startEventTimer();
 
@@ -277,6 +278,10 @@ class _CalendarPageState extends State<CalendarPage>
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 گرفتن تم و وضعیت
+    final appTheme = Theme.of(context).extension<AppTheme>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final cp = context.watch<CalendarProvider>();
     context.watch<MomentProvider>();
     context.watch<PeriodProvider>();
@@ -288,8 +293,11 @@ class _CalendarPageState extends State<CalendarPage>
             : null;
 
     return Scaffold(
-      extendBody: true, // 👈 این خط رو اضافه کن
-      backgroundColor: softBg,
+      extendBody: true,
+      // 👇 پس‌زمینه: در تم روشن softBg، در تم تاریک سطح پس‌زمینهٔ AppTheme
+      backgroundColor: isDark
+          ? (appTheme?.surfaceBackground ?? const Color(0xFF121212))
+          : softBg,
       body: Stack(
         children: [
           FadeTransition(
@@ -339,13 +347,18 @@ class _CalendarPageState extends State<CalendarPage>
           if (_showBlur)
             Positioned.fill(
               child: GestureDetector(
-                onTap: () => _fabKey.currentState?.close(),
+                onTap: () {
+                  if (mounted) setState(() => _showBlur = false);
+                },
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 400),
                   opacity: _showBlur ? 1.0 : 0.0,
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                    child: Container(color: Colors.black.withOpacity(0.3)),
+                    // 👇 لایهٔ بلور: در تم تاریک شفافیت مشکی بیشتر
+                    child: Container(
+                      color: Colors.black.withOpacity(isDark ? 0.5 : 0.3),
+                    ),
                   ),
                 ),
               ),
@@ -361,8 +374,7 @@ class _CalendarPageState extends State<CalendarPage>
       ),
       floatingActionButton: _currentTab == 0
           ? Padding(
-              padding:
-                  const EdgeInsets.only(bottom: 80), // 🔥 ۸۰px فاصله از پایین
+              padding: const EdgeInsets.only(bottom: 80),
               child: _buildSpeedFanFAB(),
             )
           : null,
@@ -372,19 +384,16 @@ class _CalendarPageState extends State<CalendarPage>
 
   Widget _buildSpeedFanFAB() {
     return SpeedFanFAB(
-      key: _fabKey,
+      // ❌ key: _fabKey   (دیگه پاس نمیدیم)
       fabColor: const Color(0xFFE8456B),
       fabSize: 60,
       itemSize: 40,
       radius: 90,
       closeIcon: Icons.add_rounded,
       openIcon: Icons.close_rounded,
-      onOpenChanged: () {
-        if (mounted) {
-          setState(() {
-            _showBlur = _fabKey.currentState?.isOpen ?? false;
-          });
-        }
+      // 👇 به‌جای GlobalKey از این callback استفاده می‌کنیم
+      onOpenChanged: (isOpen) {
+        if (mounted) setState(() => _showBlur = isOpen);
       },
       items: [
         FanItem(
@@ -394,7 +403,7 @@ class _CalendarPageState extends State<CalendarPage>
           onTap: () {
             final cp = context.read<CalendarProvider>();
             AddNoteSheet.show(context, cp);
-            _fabKey.currentState?.close();
+            if (mounted) setState(() => _showBlur = false); // بستن blur
           },
         ),
         FanItem(
@@ -404,7 +413,7 @@ class _CalendarPageState extends State<CalendarPage>
           onTap: () {
             final momentProvider = context.read<MomentProvider>();
             AddMomentSheet.show(context, momentProvider);
-            _fabKey.currentState?.close();
+            if (mounted) setState(() => _showBlur = false);
           },
         ),
         FanItem(
@@ -414,7 +423,7 @@ class _CalendarPageState extends State<CalendarPage>
           onTap: () {
             final cp = context.read<CalendarProvider>();
             AddNoteSheet.show(context, cp);
-            _fabKey.currentState?.close();
+            if (mounted) setState(() => _showBlur = false);
           },
         ),
       ],
@@ -427,6 +436,7 @@ class _MalePeriodPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppTheme>();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -436,13 +446,18 @@ class _MalePeriodPlaceholder extends StatelessWidget {
           Text(
             'اطلاعات سیکل پارتنر شما اینجا نمایش داده می‌شود',
             style: TextStyle(
-                fontFamily: 'Vazir', fontSize: 18, color: Colors.grey.shade600),
+                fontFamily: 'Vazir',
+                fontSize: 18,
+                color: appTheme?.textHint ?? Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
           Text(
             'این بخش مخصوص پارتنر شماست 👩‍🦰',
             style: TextStyle(
-                fontFamily: 'Vazir', fontSize: 14, color: Colors.grey.shade400),
+                fontFamily: 'Vazir',
+                fontSize: 14,
+                color: appTheme?.textHint?.withOpacity(0.7) ??
+                    Colors.grey.shade400),
           ),
         ],
       ),
