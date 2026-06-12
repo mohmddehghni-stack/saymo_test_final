@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_application_1/shared/services/couple_service.dart';
 
@@ -11,7 +10,7 @@ class LocationCard extends StatefulWidget {
 }
 
 class _LocationCardState extends State<LocationCard> {
-  double _distance = 85; // کیلومتر
+  double _distance = 85;
   String _myLastUpdate = 'همین الان';
   String _partnerLastUpdate = '۵ دقیقه پیش';
   bool _isUpdating = false;
@@ -20,11 +19,14 @@ class _LocationCardState extends State<LocationCard> {
   double _partnerPinX = 0.3;
   double _partnerPinY = 0.35;
 
+  // رنگ‌های جدید برند
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color primaryPurple = Color(0xFF862AF5);
+
   void _updateLocation() async {
     setState(() => _isUpdating = true);
 
     try {
-      // 🔥 چک کردن Permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -39,12 +41,10 @@ class _LocationCardState extends State<LocationCard> {
         }
       }
 
-      // 🔥 گرفتن موقعیت واقعی
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // 🔥 ارسال به سرور
       await CoupleService.updateLocation(
         position.latitude,
         position.longitude,
@@ -75,7 +75,7 @@ class _LocationCardState extends State<LocationCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          backgroundColor: AppColors.surfacePrimary,
+          backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -85,8 +85,8 @@ class _LocationCardState extends State<LocationCard> {
                   height: 70,
                   width: 70,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryDark],
+                    gradient: LinearGradient(
+                      colors: [primaryPink, primaryPurple], // صورتی → بنفش
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -120,7 +120,7 @@ class _LocationCardState extends State<LocationCard> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: primaryPink,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -153,7 +153,13 @@ class _LocationCardState extends State<LocationCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -169,8 +175,8 @@ class _LocationCardState extends State<LocationCard> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.periodBackground,
-                  AppColors.primary.withOpacity(0.05),
+                  primaryPink.withOpacity(0.03), // صورتی خیلی کمرنگ
+                  primaryPurple.withOpacity(0.02), // بنفش خیلی کمرنگ
                 ],
               ),
             ),
@@ -184,7 +190,7 @@ class _LocationCardState extends State<LocationCard> {
                     right: 10,
                     child: Container(
                       height: 1,
-                      color: AppColors.primary.withOpacity(0.15),
+                      color: primaryPink.withOpacity(0.08),
                     ),
                   );
                 }),
@@ -195,12 +201,12 @@ class _LocationCardState extends State<LocationCard> {
                     bottom: 10,
                     child: Container(
                       width: 1,
-                      color: AppColors.primary.withOpacity(0.15),
+                      color: primaryPurple.withOpacity(0.08),
                     ),
                   );
                 }),
 
-                // پین پارتنر (قلب قرمز)
+                // پین پارتنر (بنفش)
                 Positioned(
                   left: MediaQuery.of(context).size.width * _partnerPinX,
                   top: 20 + (_partnerPinY * 100),
@@ -223,7 +229,7 @@ class _LocationCardState extends State<LocationCard> {
                           style: TextStyle(
                             fontFamily: 'Vazir',
                             fontSize: 9,
-                            color: AppColors.primaryDark,
+                            color: primaryPurple,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -234,14 +240,14 @@ class _LocationCardState extends State<LocationCard> {
                         children: [
                           const Icon(
                             Icons.favorite,
-                            color: AppColors.primaryDark,
+                            color: primaryPurple,
                             size: 36,
                           ),
                           Container(
                             height: 10,
                             width: 10,
                             decoration: const BoxDecoration(
-                              color: AppColors.primaryDark,
+                              color: primaryPurple,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -251,7 +257,7 @@ class _LocationCardState extends State<LocationCard> {
                   ),
                 ),
 
-                // پین خودم (دایره صورتی)
+                // پین خودم (صورتی)
                 Positioned(
                   left: MediaQuery.of(context).size.width * _myPinX,
                   top: 20 + (_myPinY * 100),
@@ -274,7 +280,7 @@ class _LocationCardState extends State<LocationCard> {
                           style: TextStyle(
                             fontFamily: 'Vazir',
                             fontSize: 9,
-                            color: AppColors.primary,
+                            color: primaryPink,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -287,7 +293,7 @@ class _LocationCardState extends State<LocationCard> {
                             height: 36,
                             width: 36,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: primaryPink.withOpacity(0.3),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -295,13 +301,11 @@ class _LocationCardState extends State<LocationCard> {
                             height: 14,
                             width: 14,
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: primaryPink,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFFE87984,
-                                  ).withOpacity(0.5),
+                                  color: primaryPink.withOpacity(0.5),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                 ),
@@ -330,7 +334,7 @@ class _LocationCardState extends State<LocationCard> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.08),
+                          color: primaryPink.withOpacity(0.06),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -362,7 +366,7 @@ class _LocationCardState extends State<LocationCard> {
                                       fontFamily: 'Vazir',
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
+                                      color: primaryPink,
                                     ),
                                   ),
                                 ],
@@ -378,7 +382,7 @@ class _LocationCardState extends State<LocationCard> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryDark.withOpacity(0.08),
+                          color: primaryPurple.withOpacity(0.06),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -412,7 +416,7 @@ class _LocationCardState extends State<LocationCard> {
                                       fontFamily: 'Vazir',
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryDark,
+                                      color: primaryPurple,
                                     ),
                                   ),
                                 ],
@@ -427,8 +431,6 @@ class _LocationCardState extends State<LocationCard> {
 
                 const SizedBox(height: 10),
 
-                const SizedBox(height: 10),
-
                 // نمایش فاصله
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -436,7 +438,7 @@ class _LocationCardState extends State<LocationCard> {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.06),
+                    color: primaryPink.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -444,7 +446,7 @@ class _LocationCardState extends State<LocationCard> {
                     children: [
                       const Icon(
                         Icons.favorite,
-                        color: AppColors.primary,
+                        color: primaryPink,
                         size: 16,
                       ),
                       const SizedBox(width: 8),
@@ -454,7 +456,7 @@ class _LocationCardState extends State<LocationCard> {
                           fontFamily: 'Vazir',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: primaryPink,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -471,10 +473,8 @@ class _LocationCardState extends State<LocationCard> {
                   child: ElevatedButton.icon(
                     onPressed: _isUpdating ? null : _updateLocation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: const Color(
-                        0xFFE87984,
-                      ).withOpacity(0.5),
+                      backgroundColor: primaryPink,
+                      disabledBackgroundColor: primaryPink.withOpacity(0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),

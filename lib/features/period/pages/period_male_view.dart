@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import '../widgets/cycle_painter.dart';
 
 class PeriodMaleView extends StatelessWidget {
@@ -14,6 +13,10 @@ class PeriodMaleView extends StatelessWidget {
     required this.periodLength,
   });
 
+  // رنگ‌های برند جدید
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color primaryPurple = Color(0xFF862AF5);
+
   @override
   Widget build(BuildContext context) {
     String moodEmoji, statusText, careText, predictionText;
@@ -25,7 +28,7 @@ class PeriodMaleView extends StatelessWidget {
       careText =
           'الان احتمالاً خسته‌ست و نیاز به استراحت داره. یه دوش آب گرم، یه ماساژ گردن، یا یه شاخه گل می‌تونه معجزه کنه 🌸';
       predictionText = '${cycleLength - currentDay} روز تا پایان این دوره';
-      accentColor = AppColors.primary;
+      accentColor = primaryPink; // صورتی
     } else if (currentDay <= 13) {
       moodEmoji = '😊';
       statusText = 'حالش خوبه!';
@@ -33,7 +36,7 @@ class PeriodMaleView extends StatelessWidget {
           'پر انرژی و سرحاله. بهترین وقت برای یه قرار عاشقونه، پیاده‌روی دونفره، یا برنامه‌ریزی آخر هفته‌ست ✨';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = const Color(0xFF5B8DEF);
+      accentColor = primaryPurple; // بنفش
     } else if (currentDay <= 16) {
       moodEmoji = '😍';
       statusText = 'روزای طلایی!';
@@ -41,7 +44,7 @@ class PeriodMaleView extends StatelessWidget {
           'اوج انرژی و اعتماد به نفسشه. بهترین وقت برای خرید، مهمونی، و کارای مهمه. بهش بگو چقدر خوشگله! 💕';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = const Color(0xFFD4A017);
+      accentColor = primaryPink; // صورتی (انرژی)
     } else {
       moodEmoji = '😟';
       statusText = 'یه کم حساس شده...';
@@ -49,7 +52,7 @@ class PeriodMaleView extends StatelessWidget {
           'ممکنه یه کم حساس‌تر باشه. شکلات تلخ، غذای خونگی، یه فیلم خوب، و یه عالمه محبت بهترین داروهاست 🍫🎬';
       predictionText =
           '${periodLength + cycleLength - currentDay} روز تا پریود بعدی';
-      accentColor = const Color(0xFF9B59B6);
+      accentColor = primaryPurple; // بنفش
     }
 
     return SingleChildScrollView(
@@ -401,9 +404,7 @@ class PeriodMaleView extends StatelessWidget {
       const SizedBox(height: 2),
       Text(label,
           style: const TextStyle(
-              fontFamily: 'Vazir',
-              fontSize: 10,
-              color: const Color(0xFF999999))),
+              fontFamily: 'Vazir', fontSize: 10, color: Color(0xFF999999))),
     ]);
   }
 }

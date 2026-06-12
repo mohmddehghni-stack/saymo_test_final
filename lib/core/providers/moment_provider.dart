@@ -257,34 +257,51 @@ class MomentProvider extends ChangeNotifier {
     String category = 'appointment',
     String emoji = '🎉',
     bool isRecurring = false,
+    bool isPrivate = false,
     TimeOfDay? reminderTime,
   }) async {
+    final coupleId = ApiService.coupleId;
+    if (coupleId == null) return;
+
     final momentDateJalali =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final momentDateGregorian =
         date.toDateTime().toIso8601String().split('T')[0];
 
+    final Map<String, dynamic> bodyMap = {
+      'title': title,
+      'momentDateJalali': momentDateJalali,
+      'momentDate': momentDateGregorian,
+      'category': category,
+      'emoji': emoji,
+      'isRecurring': isRecurring,
+      'isPrivate': isPrivate,
+      'couple_id': coupleId,
+    };
+
+    // reminderTime فقط در صورت وجود
+    if (reminderTime != null) {
+      bodyMap['reminderTime'] =
+          '${reminderTime.hour.toString().padLeft(2, '0')}:${reminderTime.minute.toString().padLeft(2, '0')}:00';
+    }
+
+    // ⚠️ startDate ها رو نفرست. (در ویرایش معمولاً startDate تغییر نمی‌کنه)
+    // اگر سرور الزاماً بهشون نیاز داره، می‌تونیم بعداً با مقدار خالی بفرستیم.
+
+    final body = jsonEncode(bodyMap);
+    debugPrint('🔹 PUT body for id $id: $body');
+
     try {
       final uri = Uri.parse('${ApiService.baseUrl}/calendar/moments/$id');
-      final response = await http.put(uri,
-          body: jsonEncode({
-            'title': title,
-            'momentDateJalali': momentDateJalali,
-            'momentDate': momentDateGregorian,
-            'category': category,
-            'emoji': emoji,
-            'isRecurring': isRecurring,
-            'reminderTime': reminderTime != null
-                ? '${reminderTime.hour.toString().padLeft(2, '0')}:${reminderTime.minute.toString().padLeft(2, '0')}:00'
-                : null,
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${ApiService.token}',
-          });
+      final response = await http.put(uri, body: body, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiService.token}',
+      });
 
       if (response.statusCode == 200) {
         await loadMoments();
+      } else {
+        debugPrint('❌ Update failed: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       debugPrint('❌ Error updating moment: $e');

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../../../../core/providers/period_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class PeriodSetupView extends StatelessWidget {
   final VoidCallback? onCompleted;
@@ -12,6 +10,10 @@ class PeriodSetupView extends StatelessWidget {
     super.key,
     this.onCompleted,
   });
+
+  // رنگ‌های برند
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color softBg = Color(0xFFFFF9FA); // پس‌زمینه ملایم
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class PeriodSetupView extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF5F5), Colors.white],
+            colors: [softBg, Colors.white], // صورتی‌ خیلی کمرنگ → سفید
           ),
         ),
         child: SafeArea(
@@ -41,8 +43,7 @@ class PeriodSetupView extends StatelessWidget {
                     fontFamily: 'Vazir',
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5D4037),
-                    decoration: TextDecoration.none,
+                    color: Color(0xFF1A1A2E), // مشکی ملایم
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -52,8 +53,7 @@ class PeriodSetupView extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Colors.black54,
-                    decoration: TextDecoration.none,
+                    color: Color(0xFF8E8E98), // خاکستری ملایم
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -64,8 +64,7 @@ class PeriodSetupView extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF5D4037),
-                    decoration: TextDecoration.none,
+                    color: Color(0xFF1A1A2E),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -105,13 +104,12 @@ class PeriodSetupView extends StatelessWidget {
                             fontFamily: 'Vazir',
                             fontSize: 16,
                             color: periodProvider.lastPeriodStart != null
-                                ? AppColors.primaryDark
+                                ? primaryPink
                                 : Colors.grey,
-                            decoration: TextDecoration.none,
                           ),
                         ),
                         const Icon(Icons.calendar_today,
-                            color: AppColors.primaryDark, size: 20),
+                            color: primaryPink, size: 20),
                       ],
                     ),
                   ),
@@ -124,8 +122,7 @@ class PeriodSetupView extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF5D4037),
-                    decoration: TextDecoration.none,
+                    color: Color(0xFF1A1A2E),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -157,8 +154,7 @@ class PeriodSetupView extends StatelessWidget {
                           fontFamily: 'Vazir',
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryDark,
-                          decoration: TextDecoration.none,
+                          color: primaryPink,
                         ),
                       ),
                       _setupButton(
@@ -178,8 +174,7 @@ class PeriodSetupView extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 14,
-                    color: Color(0xFF5D4037),
-                    decoration: TextDecoration.none,
+                    color: Color(0xFF1A1A2E),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -189,7 +184,6 @@ class PeriodSetupView extends StatelessWidget {
                     fontFamily: 'Vazir',
                     fontSize: 11,
                     color: Colors.grey.shade500,
-                    decoration: TextDecoration.none,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -221,8 +215,7 @@ class PeriodSetupView extends StatelessWidget {
                           fontFamily: 'Vazir',
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryDark,
-                          decoration: TextDecoration.none,
+                          color: primaryPink,
                         ),
                       ),
                       _setupButton(
@@ -237,13 +230,12 @@ class PeriodSetupView extends StatelessWidget {
                 const SizedBox(height: 32),
 
                 // دکمه ذخیره
-                // دکمه ذخیره
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryDark,
+                      backgroundColor: primaryPink,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -260,7 +252,6 @@ class PeriodSetupView extends StatelessWidget {
                         fontFamily: 'Vazir',
                         fontSize: 16,
                         color: Colors.white,
-                        decoration: TextDecoration.none,
                       ),
                     ),
                   ),
@@ -273,7 +264,6 @@ class PeriodSetupView extends StatelessWidget {
                       fontFamily: 'Vazir',
                       fontSize: 12,
                       color: Colors.red.shade400,
-                      decoration: TextDecoration.none,
                     ),
                   ),
                 ],
@@ -312,13 +302,13 @@ class PeriodSetupView extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: enabled
-              ? AppColors.primaryDark.withOpacity(0.1)
+              ? primaryPink.withOpacity(0.1)
               : Colors.grey.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
           icon,
-          color: enabled ? AppColors.primaryDark : Colors.grey,
+          color: enabled ? primaryPink : Colors.grey,
           size: 20,
         ),
       ),
@@ -345,7 +335,7 @@ class PeriodSetupView extends StatelessWidget {
   }
 }
 
-// پیکر تاریخ شمسی (بدون تغییر)
+// ========== تقویم شمسی ==========
 class _JalaliDatePickerDialog extends StatefulWidget {
   final Jalali initialDate;
   final Jalali firstDate;
@@ -368,8 +358,8 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
   late Jalali _selectedDate;
   late PageController _pageController;
 
-  static const Color primaryPink = Color(0xFFE8456B);
-  static const Color softPink = AppColors.periodBackground;
+  static const Color primaryPink = Color(0xFFFE4773); // صورتی برند
+  static const Color softPink = Color(0xFFFFF9FA); // پس‌زمینه محو
 
   @override
   void initState() {
@@ -479,14 +469,12 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                   fontFamily: 'Vazir',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
-                  decoration: TextDecoration.none)),
+                  color: Color(0xFF333333))),
           Text('$_selectedYear',
               style: TextStyle(
                   fontFamily: 'Vazir',
                   fontSize: 12,
-                  color: Colors.grey.shade500,
-                  decoration: TextDecoration.none)),
+                  color: Colors.grey.shade500)),
         ]),
         _navButton(
             Icons.chevron_left_rounded,
@@ -528,8 +516,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                         fontWeight: FontWeight.w600,
                         color: isFriday
                             ? primaryPink.withOpacity(0.7)
-                            : Colors.grey.shade500,
-                        decoration: TextDecoration.none))),
+                            : Colors.grey.shade500))),
           );
         }).toList(),
       ),
@@ -594,8 +581,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                                   ? Colors.white
                                   : isToday
                                       ? primaryPink
-                                      : const Color(0xFF333333),
-                          decoration: TextDecoration.none))),
+                                      : const Color(0xFF333333)))),
             ),
           );
         },
@@ -617,10 +603,7 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
               padding: const EdgeInsets.symmetric(vertical: 14)),
           onPressed: () => Navigator.pop(context),
           child: const Text('انصراف',
-              style: TextStyle(
-                  fontFamily: 'Vazir',
-                  fontSize: 15,
-                  decoration: TextDecoration.none)),
+              style: TextStyle(fontFamily: 'Vazir', fontSize: 15)),
         )),
         const SizedBox(width: 12),
         Expanded(
@@ -635,19 +618,18 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
                 elevation: 0),
             onPressed: () => Navigator.pop(context, _selectedDate),
             child: Text(
-                '${_selectedDate.day} ${_getMonthName(_selectedDate.month)} $_selectedYear',
+                '${_selectedDate.day} ${_monthName(_selectedDate.month)} $_selectedYear',
                 style: const TextStyle(
                     fontFamily: 'Vazir',
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    decoration: TextDecoration.none)),
+                    fontWeight: FontWeight.w600)),
           ),
         ),
       ],
     );
   }
 
-  String _getMonthName(int month) {
+  String _monthName(int month) {
     const months = [
       '',
       'فروردین',

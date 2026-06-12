@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/services/couple_service.dart';
 import 'package:flutter_application_1/core/providers/couple_cache_provider.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +19,10 @@ class _MissYouButtonState extends State<MissYouButton>
   late final AnimationController _animController;
   late final Animation<double> _scaleAnim;
   final List<_FloatingHeart> _hearts = [];
+
+  // رنگ‌های جدید برند
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color primaryPurple = Color(0xFF862AF5);
 
   @override
   void initState() {
@@ -53,7 +56,7 @@ class _MissYouButtonState extends State<MissYouButton>
 
     widget.onPressed();
 
-    // 🔥 ارسال به سرور و رفرش
+    // ارسال به سرور و رفرش
     CoupleService.sendMissYou().then((_) {
       if (mounted) {
         context.read<CoupleCacheProvider>().refreshMissYouCounts();
@@ -75,7 +78,6 @@ class _MissYouButtonState extends State<MissYouButton>
   @override
   Widget build(BuildContext context) {
     return Center(
-      // ✅ فقط این باعث وسط شدن درست میشه
       child: SizedBox(
         width: 170,
         height: 32,
@@ -96,12 +98,15 @@ class _MissYouButtonState extends State<MissYouButton>
                     height: 32,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primary],
+                        colors: [
+                          primaryPink,
+                          primaryPink
+                        ], // یا می‌تونی یه گرادینت صورتی→بنفش بذاری
                       ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.4),
+                          color: primaryPink.withOpacity(0.4),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -122,8 +127,6 @@ class _MissYouButtonState extends State<MissYouButton>
                 ),
               ),
             ),
-
-            // ✅ فقط اصلاح موقعیت وسط قلب‌ها
             ..._hearts.map(
               (heart) => Positioned.fill(
                 child: Center(
@@ -244,14 +247,16 @@ class _FireworkHeartState extends State<_FireworkHeart>
     return icons[index % icons.length];
   }
 
+  // 🔥 پالت جدید قلب‌ها: صورتی، بنفش، سفید
   Color _getHeartColor(int index) {
-    const colors = [
-      AppColors.primary,
-      AppColors.primaryDark,
-      Color(0xFFFFB6C1),
-      Color(0xFFFF69B4),
+    // لیست غیرثابت
+    final colors = [
+      _MissYouButtonState.primaryPink,
+      _MissYouButtonState.primaryPurple,
+      const Color(0xFFFFB6C1),
+      const Color(0xFFFF69B4),
       Colors.white,
-      AppColors.primary,
+      _MissYouButtonState.primaryPurple.withOpacity(0.7),
     ];
     return colors[index % colors.length];
   }

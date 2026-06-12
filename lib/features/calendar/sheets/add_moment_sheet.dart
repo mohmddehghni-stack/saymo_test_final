@@ -13,11 +13,15 @@ import 'package:flutter_application_1/shared/services/notification_service.dart'
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AddMomentSheet {
-  static const Color primaryPink = AppColors.primary;
-  static const Color softBg = AppColors.backgroundLight;
+  static const Color primaryPink = Color(0xFFFE4773); // رنگ اصلی جدید
+  static const Color selectedCardBg =
+      Color.fromARGB(255, 255, 244, 244); // جایگزین FDF4F5
+  static const Color softBg =
+      Color(0xFFFDF4F5); // می‌تونی برای جاهای دیگه هم استفاده کنی
   static const Color cardBg = Color(0xFFFFFFFF);
   static const Color textDark = Color(0xFF1A1A2E);
   static const Color textGrey = Color(0xFF8E8E98);
+  static const Color primaryPurple = Color(0xFF862AF5); // بنفش برند
 
   static String _getMonthName(int month) {
     const names = [
@@ -47,6 +51,7 @@ class AddMomentSheet {
     Jalali selectedDate = Jalali.now();
     bool isRecurring = false;
     bool isPrivate = false;
+    String? selectedActivity;
     TimeOfDay? selectedTime;
 
     showModalBottomSheet(
@@ -83,410 +88,460 @@ class AddMomentSheet {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: textDark)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  // نوع لحظه
-                  const Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('نوع لحظه:',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: textDark))),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    _buildCategoryOption(
-                        '🎉',
-                        'قرار',
-                        'appointment',
-                        selectedCategory,
-                        () => setSheetState(() {
-                              selectedCategory = 'appointment';
-                              selectedEmoji = '🎉';
-                              _selectedTitles.clear();
-                              _searchController.clear();
-                            })),
-                    const SizedBox(width: 8),
-                    _buildCategoryOption(
-                        '💎',
-                        'مناسبت',
-                        'milestone',
-                        selectedCategory,
-                        () => setSheetState(() {
-                              selectedCategory = 'milestone';
-                              selectedEmoji = '💎';
-                              _selectedTitles.clear();
-                              _searchController.clear();
-                            })),
-                    const SizedBox(width: 8),
-                    _buildCategoryOption(
-                        '💋',
-                        'اولین',
-                        'first',
-                        selectedCategory,
-                        () => setSheetState(() {
-                              selectedCategory = 'first';
-                              selectedEmoji = '💋';
-                              _selectedTitles.clear();
-                              _searchController.clear();
-                            })),
-                  ]),
-                  const SizedBox(height: 16),
-
-                  // ─── مناسبت‌ها ───
-                  if (selectedCategory == 'milestone') ...[
-                    const Align(
-                        alignment: Alignment.centerRight,
-                        child: Text('انتخاب مناسبت:',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: textDark))),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _searchController,
-                      style: const TextStyle(fontSize: 13, color: textDark),
-                      decoration: InputDecoration(
-                        hintText: 'جستجو: تولد، سالگرد، ولنتاین...',
-                        hintStyle: TextStyle(
-                            color: textGrey.withOpacity(0.5), fontSize: 12),
-                        filled: true,
-                        fillColor: softBg,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        prefixIcon: const Icon(Icons.search_rounded,
-                            size: 18, color: textGrey),
+// ─── عنوان با نقطه ───
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primaryPink,
+                        ),
                       ),
-                      onChanged: (_) => setSheetState(() {}),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 160,
-                      child: SingleChildScrollView(
-                        child: Builder(builder: (context) {
-                          final allPresets = PresetMoments.milestones;
-                          final query = _searchController.text.trim();
-                          final filtered = query.isEmpty
-                              ? allPresets
-                              : allPresets
-                                  .where((p) => p['title']!.contains(query))
-                                  .toList();
-                          if (filtered.isEmpty)
-                            return Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Text('موردی پیدا نشد',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: textGrey.withOpacity(0.6))));
-                          return Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: filtered.map((preset) {
-                                final isSelected =
-                                    _selectedTitles.contains(preset['title']);
-                                return GestureDetector(
-                                  onTap: () => setSheetState(() {
-                                    if (isSelected) {
-                                      _selectedTitles.remove(preset['title']);
-                                    } else {
-                                      _selectedTitles.add(preset['title']!);
-                                    }
-                                  }),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? primaryPink.withOpacity(0.1)
-                                            : softBg,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                            color: isSelected
-                                                ? primaryPink
-                                                : Colors.grey.shade200)),
-                                    child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(preset['emoji']!,
-                                              style: const TextStyle(
-                                                  fontSize: 14)),
-                                          const SizedBox(width: 4),
-                                          Text(preset['title']!,
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: isSelected
-                                                      ? primaryPink
-                                                      : textDark)),
-                                          if (isSelected) ...[
-                                            const SizedBox(width: 4),
-                                            const Icon(
-                                                Icons.check_circle_rounded,
-                                                size: 16,
-                                                color: primaryPink)
-                                          ],
-                                        ]),
-                                  ),
-                                );
-                              }).toList());
+                      const SizedBox(width: 8),
+                      const Text(
+                        'نوع رویداد',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+// کارت‌های انتخاب نوع رویداد
+                  Row(
+                    children: [
+                      _buildCategoryCard(
+                        icon: Icons.event_available_rounded,
+                        label: 'قرارها',
+                        description: 'قرارهای عاشقانه، برنامه‌ها و...',
+                        category: 'appointment',
+                        selectedCategory: selectedCategory,
+                        onTap: () => setSheetState(() {
+                          selectedCategory = 'appointment';
+                          selectedEmoji = '📅';
+                          selectedActivity = null;
+                          _selectedTitles.clear();
+                          _searchController.clear();
                         }),
                       ),
-                    ),
-                    if (_selectedTitles.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      const Align(
-                          alignment: Alignment.centerRight,
-                          child: Text('انتخاب‌ها:',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: textDark))),
-                      const SizedBox(height: 8),
-                      Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _selectedTitles.map((title) {
-                            final preset = PresetMoments.milestones
-                                .firstWhere((p) => p['title'] == title);
-                            return Chip(
-                                label: Text('${preset['emoji']} $title',
-                                    style: const TextStyle(fontSize: 12)),
-                                deleteIcon:
-                                    const Icon(Icons.close_rounded, size: 14),
-                                onDeleted: () => setSheetState(
-                                    () => _selectedTitles.remove(title)),
-                                backgroundColor: primaryPink.withOpacity(0.08),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20)));
-                          }).toList()),
+                      const SizedBox(width: 10),
+                      _buildCategoryCard(
+                        icon: Icons.card_giftcard,
+                        label: 'مناسبت‌ها',
+                        description: 'تولد، سالگرد و...',
+                        category: 'milestone',
+                        selectedCategory: selectedCategory,
+                        onTap: () => setSheetState(() {
+                          selectedCategory = 'milestone';
+                          selectedEmoji = '🎉';
+                          _selectedTitles.clear();
+                          _searchController.clear();
+                        }),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildCategoryCard(
+                        icon: Icons.favorite_rounded,
+                        label: 'اولین‌ها',
+                        description: 'نقاط عطف رابطه',
+                        category: 'first',
+                        selectedCategory: selectedCategory,
+                        onTap: () => setSheetState(() {
+                          selectedCategory = 'first';
+                          selectedEmoji = '💖';
+                          _selectedTitles.clear();
+                          _searchController.clear();
+                        }),
+                      ),
                     ],
-                    const SizedBox(height: 16),
-                  ] else ...[
-                    // ─── قرار / اولین ───
-                    const Align(
-                        alignment: Alignment.centerRight,
-                        child: Text('ایموجی:',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: textDark))),
-                    const SizedBox(height: 8),
-                    Wrap(
-                        spacing: 8,
-                        children: [
-                          '🎉',
-                          '💎',
-                          '💋',
-                          '❤️',
-                          '🌟',
-                          '🎂',
-                          '✈️',
-                          '🍿',
-                          '💍',
-                          '🏠'
-                        ].map((emoji) {
-                          return GestureDetector(
-                            onTap: () =>
-                                setSheetState(() => selectedEmoji = emoji),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: selectedEmoji == emoji
-                                      ? primaryPink.withOpacity(0.15)
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                      color: selectedEmoji == emoji
-                                          ? primaryPink
-                                          : Colors.grey.shade300,
-                                      width: selectedEmoji == emoji ? 2 : 1)),
-                              child: Center(
-                                  child: Text(emoji,
-                                      style: TextStyle(fontSize: 18))),
-                            ),
-                          );
-                        }).toList()),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: titleController,
-                      autofocus: true,
-                      style: const TextStyle(fontSize: 14, color: textDark),
-                      decoration: InputDecoration(
-                          hintText: 'عنوان لحظه...',
-                          hintStyle:
-                              TextStyle(color: textGrey.withOpacity(0.5)),
-                          filled: true,
-                          fillColor: softBg,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.all(14)),
-                    ),
-                    const SizedBox(height: 14),
-                    const Align(
-                        alignment: Alignment.centerRight,
-                        child: Text('پیشنهادها:',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: textDark))),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 80,
-                      child: ShaderMask(
-                        shaderCallback: (rect) => LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black,
-                              Colors.black,
-                              Colors.black,
-                              Colors.transparent
-                            ],
-                            stops: [
-                              0.0,
-                              0.5,
-                              0.8,
-                              1.0
-                            ]).createShader(rect),
-                        blendMode: BlendMode.dstIn,
-                        child: SingleChildScrollView(
-                          child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: PresetMoments.getPresetsForCategory(
-                                      selectedCategory == 'first'
-                                          ? 'first'
-                                          : 'appointment')
-                                  .map((preset) {
-                                return GestureDetector(
-                                  onTap: () => setSheetState(() {
-                                    titleController.text = preset['title']!;
-                                    selectedEmoji = preset['emoji']!;
-                                  }),
-                                  child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      decoration: BoxDecoration(
-                                          color: softBg,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                              color: Colors.grey.shade200)),
-                                      child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(preset['emoji']!,
-                                                style: const TextStyle(
-                                                    fontSize: 14)),
-                                            const SizedBox(width: 4),
-                                            Text(preset['title']!,
-                                                style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: textDark))
-                                          ])),
-                                );
-                              }).toList()),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // تاریخ
-                  InkWell(
-                    onTap: () async {
-                      final picked = await _showJalaliDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                      );
-                      if (picked != null)
-                        setSheetState(() => selectedDate = picked);
-                    },
-                    child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                            color: softBg,
-                            borderRadius: BorderRadius.circular(14)),
-                        child: Row(children: [
-                          const Icon(Icons.calendar_today,
-                              size: 18, color: textGrey),
-                          const SizedBox(width: 10),
-                          Text(
-                              '${selectedDate.day} ${_getMonthName(selectedDate.month)} ${selectedDate.year}',
-                              style: const TextStyle(
-                                  fontSize: 14, color: textDark))
-                        ])),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // تکرار
-                  Row(children: [
-                    const Text('تکرار هر سال:',
-                        style: TextStyle(fontSize: 13, color: textDark)),
-                    const Spacer(),
-                    Switch(
-                        value: isRecurring,
-                        onChanged: (v) => setSheetState(() => isRecurring = v),
-                        activeColor: primaryPink)
-                  ]),
-                  const SizedBox(height: 14),
-
-                  // دفترچه شخصی
-                  Row(children: [
-                    const Text('فقط برای خودم',
-                        style: TextStyle(fontSize: 13, color: textDark)),
-                    const Spacer(),
-                    Switch(
-                        value: isPrivate,
-                        onChanged: (v) => setSheetState(() => isPrivate = v),
-                        activeColor: primaryPink)
-                  ]),
-                  const SizedBox(height: 20),
-                  // 🔥 انتخاب زمان
-                  InkWell(
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime:
-                            selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
-                        builder: (context, child) => Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: MediaQuery(
-                            data: MediaQuery.of(context)
-                                .copyWith(alwaysUse24HourFormat: true),
-                            child: child!,
-                          ),
-                        ),
-                      );
-                      if (time != null)
-                        setSheetState(() => selectedTime = time);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(children: [
-                        const Icon(Icons.access_time,
-                            size: 18, color: Color(0xFF8E8E98)),
-                        const SizedBox(width: 10),
-                        Text(
-                          selectedTime != null
-                              ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                              : 'انتخاب زمان (اختیاری)',
-                          style: const TextStyle(
-                              fontSize: 14, color: Color(0xFF1A1A2E)),
-                        ),
-                      ]),
-                    ),
                   ),
                   const SizedBox(height: 16),
+
+                  // فقط برای گروه «قرار» و «اولین» (غیر مناسبت)
+
+                  const SizedBox(height: 14),
+                  if (selectedCategory != 'milestone') ...[
+                    const SizedBox(height: 8),
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'چی رو میخوای ثبت کنی؟',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // نوار افقی گزینه‌ها با مربع‌های کوچک
+                    SizedBox(
+                      height: 80,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        children: _buildCustomOptions(
+                          context,
+                          setSheetState,
+                          titleController,
+                          (emoji) => selectedEmoji = emoji,
+                          selectedActivity,
+                          (title) {
+                            selectedActivity = title;
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // لیبل عنوان با نقطه صورتی
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: primaryPink,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'عنوان رویداد',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // فیلد عنوان با placeholder جذاب
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black
+                                .withOpacity(0.06), // سایه مشکی خیلی ملایم
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                          BoxShadow(
+                            color: primaryPink.withOpacity(
+                                0.05), // سایه صورتی فوق‌العاده ملایم
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                            spreadRadius: -2,
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: titleController,
+                        autofocus: true,
+                        style: const TextStyle(fontSize: 14, color: textDark),
+                        decoration: InputDecoration(
+                          hintText: 'مثلاً: قرار کافه، رفتن به سینما...',
+                          hintStyle: TextStyle(
+                            color: textGrey.withOpacity(0.5),
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white, // پس‌زمینه سفید داخل فیلد
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.all(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ─── زمان رویداد ───
+
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primaryPink,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'زمان رویداد',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      // کارت تاریخ
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final picked = await _showJalaliDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                            );
+                            if (picked != null)
+                              setSheetState(() => selectedDate = picked);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today,
+                                    size: 18, color: primaryPink),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${selectedDate.day} ${_getMonthName(selectedDate.month)} ${selectedDate.year}',
+                                    style: const TextStyle(
+                                        fontSize: 13, color: textDark),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // کارت زمان
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: selectedTime ??
+                                  const TimeOfDay(hour: 9, minute: 0),
+                              builder: (context, child) => Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: MediaQuery(
+                                  data: MediaQuery.of(context)
+                                      .copyWith(alwaysUse24HourFormat: true),
+                                  child: child!,
+                                ),
+                              ),
+                            );
+                            if (time != null)
+                              setSheetState(() => selectedTime = time);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.access_time,
+                                    size: 18, color: primaryPink),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    selectedTime != null
+                                        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+                                        : 'انتخاب زمان',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: selectedTime != null
+                                          ? textDark
+                                          : textGrey,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+// ─── کادر یکپارچه تنظیمات با توضیحات ───
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // بخش اول: تکرار هر سال (آیکن بنفش)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: primaryPurple.withOpacity(
+                                      0.08), // پس‌زمینه بنفش خیلی کم‌رنگ
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.repeat_rounded,
+                                  size: 20,
+                                  color: primaryPurple, // آیکن بنفش
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'تکرار هر سال',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: textDark,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'تکرار هرسال در همین موقع',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: textGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // برای تکرار
+                              Switch(
+                                value: isRecurring,
+                                onChanged: (v) => setSheetState(() {
+                                  isRecurring = v;
+                                  // فقط isRecurring رو تغییر بده، کاری به isPrivate نداره
+                                }),
+                                activeColor: primaryPurple,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // جداکننده نازک
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          indent: 56,
+                          endIndent: 16,
+                          color: Colors.grey.shade100,
+                        ),
+
+                        // بخش دوم: فقط برای خودم (آیکن بنفش)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: primaryPurple.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 20,
+                                  color: primaryPurple,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'فقط برای خودم',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: textDark,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'این عنوان فقط برای من نمایش داده بشه',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: textGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // برای فقط خودم
+                              Switch(
+                                value: isPrivate,
+                                onChanged: (v) => setSheetState(() {
+                                  isPrivate = v;
+                                  // فقط isPrivate رو تغییر بده
+                                }),
+                                activeColor: primaryPurple,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(
+                      height:
+                          16), // فاصله تا دکمه ثبت // فاصله‌ی قبل از دکمه ثبت
 
                   // دکمه ثبت
                   SizedBox(
@@ -589,6 +644,85 @@ class AddMomentSheet {
     );
   }
 
+  static List<Widget> _buildCustomOptions(
+    BuildContext context,
+    void Function(void Function()) setSheetState,
+    TextEditingController titleCtrl,
+    void Function(String emoji) onEmojiChanged,
+    String? selectedActivity,
+    void Function(String title) onActivitySelected, // 👈 جدید
+  ) {
+    final options = [
+      {'icon': Icons.auto_awesome, 'title': 'سفارشی', 'emoji': '✨'},
+      {'icon': Icons.local_movies, 'title': 'سینما', 'emoji': '🎬'},
+      {'icon': Icons.park, 'title': 'پارک', 'emoji': '🌳'},
+      {'icon': Icons.local_cafe, 'title': 'کافه', 'emoji': '☕'},
+      {'icon': Icons.restaurant, 'title': 'رستوران', 'emoji': '🍽️'},
+      {'icon': Icons.shopping_bag, 'title': 'خرید', 'emoji': '🛍️'},
+      {'icon': Icons.directions_walk, 'title': 'پیاده‌روی', 'emoji': '🚶'},
+      {'icon': Icons.fitness_center, 'title': 'ورزش', 'emoji': '🏋️'},
+      {'icon': Icons.flight, 'title': 'مسافرت', 'emoji': '✈️'},
+    ];
+
+    return options.map((opt) {
+      final isSelected = opt['title'] == selectedActivity;
+      return GestureDetector(
+        onTap: () {
+          setSheetState(() {
+            if (opt['title'] != 'سفارشی') {
+              titleCtrl.text = opt['title'] as String;
+            } else {
+              titleCtrl.clear();
+            }
+            onEmojiChanged(opt['emoji'] as String);
+            onActivitySelected(opt['title'] as String); // 👈 جایگزین
+          });
+        },
+        child: Container(
+          width: 60,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? selectedCardBg : Colors.white, // 👈 همین خط
+            borderRadius: BorderRadius.circular(12),
+            // 👇 سایه‌ی ملایم برای حالت عادی، سایه‌ی قوی‌تر برای حالت انتخاب
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withOpacity(0.04), // همیشه سایه مشکی خیلی ملایم
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            // 👇 فقط در حالت انتخاب، یه حاشیه‌ی نازک هم می‌تونیم داشته باشیم (اختیاری)
+            // border: isSelected ? Border.all(color: primaryPink, width: 1.5) : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                opt['icon'] as IconData,
+                size: 22,
+                color: isSelected
+                    ? primaryPink
+                    : Colors.grey.shade600, // 👈 آیکن صورتی
+              ),
+              const SizedBox(height: 4),
+              Text(
+                opt['title'] as String,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? primaryPink : textDark, // 👈 متن صورتی
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+  }
+
   // ... بقیه متدها بدون تغییر
   static Future<Jalali?> _showJalaliDatePicker({
     required BuildContext context,
@@ -608,31 +742,114 @@ class AddMomentSheet {
     );
   }
 
-  static Widget _buildCategoryOption(String emoji, String label,
-      String category, String selected, VoidCallback onTap) {
-    final isSelected = selected == category;
+// متد _buildCategoryCard
+  static Widget _buildCategoryCard({
+    required IconData icon,
+    required String label,
+    required String description,
+    required String category,
+    required String selectedCategory,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = selectedCategory == category;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-              color: isSelected ? primaryPink.withOpacity(0.08) : softBg,
-              borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 145,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? selectedCardBg : Colors.white,
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
+                color: isSelected
+                    ? primaryPink // حاشیه پررنگ با رنگ اصلی
+                    : Colors.grey.shade200,
+                width: isSelected ? 1.0 : 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
                   color: isSelected
-                      ? primaryPink.withOpacity(0.3)
-                      : Colors.transparent)),
-          child: Column(children: [
-            Text(emoji, style: TextStyle(fontSize: 22)),
-            const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? primaryPink : textGrey))
-          ]),
+                      ? primaryPink.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                // محتوای اصلی
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 32,
+                      color: primaryPink, // آیکن همیشه صورتی
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? primaryPink : textGrey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected
+                            ? primaryPink.withOpacity(0.8)
+                            : textGrey.withOpacity(0.5),
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                // تیک متحرک
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.elasticOut,
+                    child: AnimatedOpacity(
+                      opacity: isSelected ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primaryPink, // دایره تیک هم رنگ اصلی
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -939,12 +1156,12 @@ class _JalaliDatePickerDialogState extends State<_JalaliDatePickerDialog> {
           flex: 2,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryPink,
+              backgroundColor: primaryPink, // #FE4773
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
               elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             onPressed: () => Navigator.pop(context, _selectedDate),
             child: Text(

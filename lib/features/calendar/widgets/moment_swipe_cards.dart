@@ -11,6 +11,83 @@ import 'package:flutter_application_1/shared/services/notification_service.dart'
 class MomentSwipeCards extends StatelessWidget {
   const MomentSwipeCards({super.key});
 
+  static List<Widget> _buildCustomOptions(
+    BuildContext context,
+    void Function(void Function()) setSheetState,
+    TextEditingController titleCtrl,
+    void Function(String emoji) onEmojiChanged,
+    String? selectedActivity,
+    void Function(String title) onActivitySelected,
+  ) {
+    const Color primaryPink = Color(0xFFFE4773);
+    const Color textDark = Color(0xFF1A1A2E);
+    const Color selectedCardBg = Color.fromARGB(75, 255, 255, 255);
+
+    final options = [
+      {'icon': Icons.auto_awesome, 'title': 'سفارشی', 'emoji': '✨'},
+      {'icon': Icons.local_movies, 'title': 'سینما', 'emoji': '🎬'},
+      {'icon': Icons.park, 'title': 'پارک', 'emoji': '🌳'},
+      {'icon': Icons.local_cafe, 'title': 'کافه', 'emoji': '☕'},
+      {'icon': Icons.restaurant, 'title': 'رستوران', 'emoji': '🍽️'},
+      {'icon': Icons.shopping_bag, 'title': 'خرید', 'emoji': '🛍️'},
+      {'icon': Icons.directions_walk, 'title': 'پیاده‌روی', 'emoji': '🚶'},
+      {'icon': Icons.fitness_center, 'title': 'ورزش', 'emoji': '🏋️'},
+      {'icon': Icons.flight, 'title': 'مسافرت', 'emoji': '✈️'},
+    ];
+
+    return options.map((opt) {
+      final isSelected = opt['title'] == selectedActivity;
+      return GestureDetector(
+        onTap: () {
+          setSheetState(() {
+            if (opt['title'] != 'سفارشی') {
+              titleCtrl.text = opt['title'] as String;
+            } else {
+              titleCtrl.clear();
+            }
+            onEmojiChanged(opt['emoji'] as String);
+            onActivitySelected(opt['title'] as String);
+          });
+        },
+        child: Container(
+          width: 60,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? selectedCardBg : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                opt['icon'] as IconData,
+                size: 22,
+                color: isSelected ? primaryPink : Colors.grey.shade800,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                opt['title'] as String,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? primaryPink : textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final mp = context.watch<MomentProvider>();
@@ -22,7 +99,7 @@ class MomentSwipeCards extends StatelessWidget {
     if (allMoments.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 150,
+      height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -37,52 +114,96 @@ class MomentSwipeCards extends StatelessWidget {
 
   static Widget _buildMomentCard(
       BuildContext context, Moment moment, MomentProvider mp) {
-    final countdownText = mp.countdownText(moment);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - 48) / 3;
+    const Color purple = Color(0xFF862AF5);
+
+    // ⚡️ روش پایدار: تبدیل به میلادی UTC و کم کردن
+    DateTime toMidnightUtc(Jalali j) {
+      final d = j.toDateTime();
+      return DateTime.utc(d.year, d.month, d.day);
+    }
+
+    final today = Jalali.now();
+    final daysLeft =
+        toMidnightUtc(moment.date).difference(toMidnightUtc(today)).inDays;
+
+    String countdownStr;
+    if (daysLeft == 0) {
+      countdownStr = 'امروز';
+    } else if (daysLeft == 1) {
+      countdownStr = '۱ روز دیگر';
+    } else if (daysLeft > 0) {
+      countdownStr = '$daysLeft روز دیگر';
+    } else {
+      countdownStr = 'گذشت';
+    }
+
+    final dateStr =
+        '${moment.date.day} ${_getMonthName(moment.date.month)} ${moment.date.year}';
 
     return GestureDetector(
       onTap: () => _showEditMomentSheet(context, moment),
       onLongPress: () => _showDeleteMomentDialog(context, moment),
       child: Container(
-        width: cardWidth,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
+        width: 170,
+        margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: purple.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(moment.emoji, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 8),
-            Text(
-              moment.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: purple.withOpacity(0.15),
+              ),
+              child: Center(
+                child: Text(moment.emoji, style: const TextStyle(fontSize: 15)),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              countdownText,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    moment.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today,
+                          size: 10, color: purple.withOpacity(0.6)),
+                      const SizedBox(width: 3),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                            fontSize: 10, color: purple.withOpacity(0.7)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    countdownStr,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: purple,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -98,8 +219,19 @@ class MomentSwipeCards extends StatelessWidget {
     String selectedEmoji = moment.emoji;
     Jalali selectedDate = moment.date;
     bool isRecurring = moment.isRecurring;
+    bool isPrivate = moment.isPrivate;
     TimeOfDay? selectedTime = moment.reminderTime;
     final momentProvider = context.read<MomentProvider>();
+
+    // 🔥 برای مربع‌های افقی فعالیت
+    final _searchController = TextEditingController();
+    final Set<String> _selectedTitles = {}; // برای مناسبت‌ها در صورت نیاز
+    String? selectedActivity; // برای هایلایت مربع
+
+    const Color primaryPink = Color(0xFFFE4773);
+    const Color primaryPurple = Color(0xFF862AF5);
+    const Color textDark = Color(0xFF1A1A2E);
+    const Color textGrey = Color(0xFF8E8E98);
 
     showModalBottomSheet(
       context: context,
@@ -135,251 +267,164 @@ class MomentSwipeCards extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
-                        'ویرایش لحظه ✨',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A2E),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // انتخاب دسته‌بندی
+                      const Text('ویرایش لحظه ✨',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textDark)),
+                      const SizedBox(height: 20),
+
+                      // ─── نوع رویداد ───
+                      _buildSectionTitle('نوع رویداد', primaryPink),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
-                          _buildCategoryChip(
-                              '🎉', 'قرار', 'appointment', selectedCategory,
-                              () {
-                            setSheetState(() {
+                          _buildCategoryCard(
+                            icon: Icons.event_available_rounded,
+                            label: 'قرارها',
+                            description: 'قرارهای عاشقانه، برنامه‌ها و...',
+                            category: 'appointment',
+                            selectedCategory: selectedCategory,
+                            onTap: () => setSheetState(() {
                               selectedCategory = 'appointment';
-                              selectedEmoji = '🎉';
-                            });
-                          }),
-                          const SizedBox(width: 8),
-                          _buildCategoryChip(
-                              '💎', 'مناسبت', 'milestone', selectedCategory,
-                              () {
-                            setSheetState(() {
+                              selectedEmoji = '📅';
+                              selectedActivity = null;
+                              titleController.clear();
+                            }),
+                          ),
+                          const SizedBox(width: 10),
+                          _buildCategoryCard(
+                            icon: Icons.celebration_rounded,
+                            label: 'مناسبت‌ها',
+                            description: 'تولد، سالگرد و...',
+                            category: 'milestone',
+                            selectedCategory: selectedCategory,
+                            onTap: () => setSheetState(() {
                               selectedCategory = 'milestone';
-                              selectedEmoji = '💎';
-                            });
-                          }),
-                          const SizedBox(width: 8),
-                          _buildCategoryChip(
-                              '💋', 'اولین', 'first', selectedCategory, () {
-                            setSheetState(() {
+                              selectedEmoji = '🎉';
+                              selectedActivity = null;
+                              titleController.clear();
+                            }),
+                          ),
+                          const SizedBox(width: 10),
+                          _buildCategoryCard(
+                            icon: Icons.favorite_rounded,
+                            label: 'اولین‌ها',
+                            description: 'نقاط عطف رابطه',
+                            category: 'first',
+                            selectedCategory: selectedCategory,
+                            onTap: () => setSheetState(() {
                               selectedCategory = 'first';
-                              selectedEmoji = '💋';
-                            });
-                          }),
+                              selectedEmoji = '💖';
+                              selectedActivity = null;
+                              titleController.clear();
+                            }),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'پیشنهادها:',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF8E8E98),
+
+                      // ─── فقط برای غیر مناسبت: مربع‌های فعالیت ───
+                      if (selectedCategory != 'milestone') ...[
+                        const SizedBox(height: 8),
+                        const Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'چی رو میخوای ثبت کنی؟',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textDark,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 80,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            children: _buildCustomOptions(
+                              context,
+                              setSheetState,
+                              titleController,
+                              (emoji) => setSheetState(() =>
+                                  selectedEmoji = emoji), // 👈 با setSheetState
+                              selectedActivity,
+                              (title) => setSheetState(() => selectedActivity =
+                                  title), // 👈 با setSheetState
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // ─── عنوان رویداد ───
+                      _buildSectionTitle('عنوان رویداد', primaryPink),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: PresetMoments.getPresetsForCategory(
-                          selectedCategory == 'first'
-                              ? 'first'
-                              : selectedCategory == 'milestone'
-                                  ? 'milestone'
-                                  : 'appointment',
-                        ).map((preset) {
-                          return GestureDetector(
-                            onTap: () {
-                              setSheetState(() {
-                                titleController.text = preset['title']!;
-                                selectedEmoji = preset['emoji']!;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.backgroundLight,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(preset['emoji']!,
-                                      style: const TextStyle(fontSize: 14)),
-                                  const SizedBox(width: 4),
-                                  Text(preset['title']!,
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF1A1A2E))),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                      _buildTitleField(
+                          titleController, primaryPink, textGrey, textDark),
                       const SizedBox(height: 16),
-                      // انتخاب ایموجی
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          '🎉',
-                          '💎',
-                          '💋',
-                          '❤️',
-                          '🌟',
-                          '🎂',
-                          '✈️',
-                          '🍿',
-                          '💍',
-                          '🏠'
-                        ].map((emoji) {
-                          return GestureDetector(
-                            onTap: () =>
-                                setSheetState(() => selectedEmoji = emoji),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: selectedEmoji == emoji
-                                    ? AppColors.primary.withOpacity(0.15)
-                                    : Colors.transparent,
-                                border: Border.all(
-                                    color: selectedEmoji == emoji
-                                        ? AppColors.primary
-                                        : Colors.grey.shade300,
-                                    width: selectedEmoji == emoji ? 2 : 1),
-                              ),
-                              child: Center(
-                                child: Text(emoji,
-                                    style: const TextStyle(fontSize: 18)),
-                              ),
+
+                      // ⚠️ بخش انتخاب ایموجی حذف شد
+
+                      // ─── تاریخ رویداد ───
+                      _buildSectionTitle('تاریخ رویداد', primaryPink),
+                      const SizedBox(height: 8),
+                      _buildDatePickerCard(
+                          selectedDate, primaryPink, textDark, textGrey,
+                          () async {
+                        final picked = await showPersianDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: Jalali(1400, 1, 1),
+                          lastDate: Jalali(1410, 12, 29),
+                          locale: const Locale('fa', 'IR'),
+                        );
+                        if (picked != null)
+                          setSheetState(() => selectedDate = picked);
+                      }),
+                      const SizedBox(height: 14),
+
+                      // ─── زمان رویداد ───
+                      _buildSectionTitle('زمان رویداد', primaryPink),
+                      const SizedBox(height: 8),
+                      _buildTimePickerCard(
+                          selectedTime, primaryPink, textDark, textGrey,
+                          () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: selectedTime ??
+                              const TimeOfDay(hour: 9, minute: 0),
+                          builder: (context, child) => Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: MediaQuery(
+                              data: MediaQuery.of(context)
+                                  .copyWith(alwaysUse24HourFormat: true),
+                              child: child!,
                             ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-                      // فیلد عنوان
-                      TextField(
-                        controller: titleController,
-                        autofocus: true,
-                        style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF1A1A2E)),
-                        decoration: InputDecoration(
-                          hintText: 'عنوان لحظه...',
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          filled: true,
-                          fillColor: AppColors.backgroundLight,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.all(14),
-                        ),
-                      ),
+                        );
+                        if (time != null)
+                          setSheetState(() => selectedTime = time);
+                      }),
                       const SizedBox(height: 14),
-                      // انتخاب تاریخ
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showPersianDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: Jalali(1400, 1, 1),
-                            lastDate: Jalali(1410, 12, 29),
-                            locale: const Locale('fa', 'IR'),
-                          );
-                          if (picked != null) {
-                            setSheetState(() => selectedDate = picked);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundLight,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today,
-                                  size: 18, color: Color(0xFF8E8E98)),
-                              const SizedBox(width: 10),
-                              Text(
-                                '${selectedDate.day} ${_getMonthName(selectedDate.month)} ${selectedDate.year}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Color(0xFF1A1A2E)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      // تکرار هر سال
-                      Row(
-                        children: [
-                          const Text('تکرار هر سال:',
-                              style: TextStyle(
-                                  fontSize: 13, color: Color(0xFF1A1A2E))),
-                          const Spacer(),
-                          Switch(
-                            value: isRecurring,
-                            onChanged: (v) =>
-                                setSheetState(() => isRecurring = v),
-                            activeColor: AppColors.primary,
-                          ),
-                        ],
+
+                      // ─── تنظیمات ───
+                      _buildSettingsBox(
+                        isRecurring: isRecurring,
+                        isPrivate: isPrivate,
+                        onRecurringChanged: (v) =>
+                            setSheetState(() => isRecurring = v),
+                        onPrivateChanged: (v) =>
+                            setSheetState(() => isPrivate = v),
+                        primaryPink: primaryPink,
+                        primaryPurple: primaryPurple,
+                        textDark: textDark,
+                        textGrey: textGrey,
                       ),
                       const SizedBox(height: 20),
 
-                      const SizedBox(height: 14),
-                      // 🔥 انتخاب زمان
-                      InkWell(
-                        onTap: () async {
-                          final time = await showTimePicker(
-                            context: context,
-                            initialTime: selectedTime ??
-                                const TimeOfDay(hour: 9, minute: 0),
-                            builder: (context, child) => Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: MediaQuery(
-                                data: MediaQuery.of(context)
-                                    .copyWith(alwaysUse24HourFormat: true),
-                                child: child!,
-                              ),
-                            ),
-                          );
-                          if (time != null)
-                            setSheetState(() => selectedTime = time);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundLight,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(children: [
-                            const Icon(Icons.access_time,
-                                size: 18, color: Color(0xFF8E8E98)),
-                            const SizedBox(width: 10),
-                            Text(
-                              selectedTime != null
-                                  ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                                  : 'انتخاب زمان (اختیاری)',
-                              style: const TextStyle(
-                                  fontSize: 14, color: Color(0xFF1A1A2E)),
-                            ),
-                          ]),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       // دکمه ذخیره
                       SizedBox(
                         width: double.infinity,
@@ -395,10 +440,10 @@ class MomentSwipeCards extends StatelessWidget {
                                 category: selectedCategory,
                                 emoji: selectedEmoji,
                                 isRecurring: isRecurring,
+                                isPrivate: isPrivate,
                                 reminderTime: selectedTime,
                               );
 
-                              // 🔥 نوتیفیکیشن بعد از ویرایش
                               if (selectedTime != null) {
                                 final scheduledDate = DateTime(
                                   selectedDate.year,
@@ -420,11 +465,10 @@ class MomentSwipeCards extends StatelessWidget {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: primaryPink,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                                borderRadius: BorderRadius.circular(14)),
                           ),
                           child: const Text('ذخیره 💕',
                               style: TextStyle(
@@ -434,27 +478,28 @@ class MomentSwipeCards extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // دکمه حذف
+
                       // دکمه حذف
                       SizedBox(
                         width: double.infinity,
                         height: 44,
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // 👈 این خط رو پاک کن: Navigator.pop(context);
-                            _showDeleteMomentDialog(
-                                context, moment); // مستقیماً دیالوگ رو باز کن
-                          },
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('حذف این لحظه'),
+                          onPressed: () =>
+                              _showDeleteMomentDialog(context, moment),
+                          icon: const Icon(Icons.delete_outline,
+                              size: 18, color: primaryPink),
+                          label: const Text('حذف این لحظه',
+                              style:
+                                  TextStyle(color: primaryPink, fontSize: 14)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red.shade400,
-                            side: BorderSide(color: Colors.red.shade200),
+                            side:
+                                BorderSide(color: primaryPink.withOpacity(0.3)),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -462,6 +507,383 @@ class MomentSwipeCards extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+
+// ────────── توابع کمکی UI ──────────
+
+  static Widget _buildSectionTitle(String title, Color dotColor) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: dotColor,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildCategoryCard({
+    required IconData icon,
+    required String label,
+    required String description,
+    required String category,
+    required String selectedCategory,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = selectedCategory == category;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: SizedBox(
+          height: 145,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color.fromARGB(75, 255, 255, 255)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color:
+                    isSelected ? const Color(0xFFFE4773) : Colors.grey.shade200,
+                width: isSelected ? 2.0 : 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isSelected
+                      ? const Color(0xFFFE4773).withOpacity(0.15)
+                      : Colors.black.withOpacity(0.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 32, color: const Color(0xFFFE4773)),
+                    const SizedBox(height: 10),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected
+                            ? const Color(0xFFFE4773)
+                            : const Color(0xFF8E8E98),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isSelected
+                            ? const Color(0xFFFE4773).withOpacity(0.7)
+                            : const Color(0xFF8E8E98).withOpacity(0.5),
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.elasticOut,
+                    child: AnimatedOpacity(
+                      opacity: isSelected ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFFE4773),
+                        ),
+                        child: const Icon(Icons.check_rounded,
+                            size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildTitleField(
+      TextEditingController controller, Color primary, Color grey, Color dark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: primary.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        autofocus: true,
+        style: TextStyle(fontSize: 14, color: dark),
+        decoration: InputDecoration(
+          hintText: 'مثلاً: قرار کافه، رفتن به سینما...',
+          hintStyle: TextStyle(color: grey.withOpacity(0.5), fontSize: 13),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.all(14),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildEmojiPicker(
+      String selectedEmoji, ValueChanged<String> onSelected, Color primary) {
+    const emojis = ['🎉', '💎', '💋', '❤️', '🌟', '🎂', '✈️', '🍿', '💍', '🏠'];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: emojis.map((emoji) {
+        final isSelected = emoji == selectedEmoji;
+        return GestureDetector(
+          onTap: () => onSelected(emoji),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected
+                  ? const Color.fromARGB(75, 255, 255, 255)
+                  : Colors.transparent,
+              border: Border.all(
+                color: isSelected ? primary : Colors.grey.shade300,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 18))),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  static Widget _buildDatePickerCard(
+      Jalali date, Color primary, Color dark, Color grey, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, size: 18, color: primary),
+            const SizedBox(width: 8),
+            Text(
+              '${date.day} ${_getMonthName(date.month)} ${date.year}',
+              style: TextStyle(fontSize: 13, color: dark),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildTimePickerCard(TimeOfDay? time, Color primary, Color dark,
+      Color grey, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.access_time, size: 18, color: primary),
+            const SizedBox(width: 8),
+            Text(
+              time != null
+                  ? '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'
+                  : 'انتخاب زمان (اختیاری)',
+              style: TextStyle(
+                fontSize: 13,
+                color: time != null ? dark : grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildSettingsBox({
+    required bool isRecurring,
+    required bool isPrivate,
+    required ValueChanged<bool> onRecurringChanged,
+    required ValueChanged<bool> onPrivateChanged,
+    required Color primaryPink,
+    required Color primaryPurple,
+    required Color textDark,
+    required Color textGrey,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: primaryPurple.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.repeat_rounded,
+                      size: 20, color: Color(0xFF862AF5)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('تکرار هر سال',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: textDark)),
+                      const SizedBox(height: 2),
+                      Text('تکرار هرسال در همین موقع',
+                          style: TextStyle(fontSize: 11, color: textGrey)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: isRecurring,
+                  onChanged: onRecurringChanged,
+                  activeColor: primaryPurple,
+                ),
+              ],
+            ),
+          ),
+          Divider(
+              height: 1,
+              thickness: 1,
+              indent: 56,
+              endIndent: 16,
+              color: Colors.grey.shade100),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: primaryPurple.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.lock_outline_rounded,
+                      size: 20, color: Color(0xFF862AF5)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('فقط برای خودم',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: textDark)),
+                      const SizedBox(height: 2),
+                      Text('این عنوان فقط برای من نمایش داده بشه',
+                          style: TextStyle(fontSize: 11, color: textGrey)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: isPrivate,
+                  onChanged: onPrivateChanged,
+                  activeColor: primaryPurple,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

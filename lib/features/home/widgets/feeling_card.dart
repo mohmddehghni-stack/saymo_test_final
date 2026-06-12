@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/shared/services/couple_service.dart';
-import 'package:flutter_application_1/shared/services/socket_service.dart';
 import 'package:flutter_application_1/core/providers/couple_cache_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_emoji/animated_emoji.dart';
@@ -20,6 +18,9 @@ class _FeelingCardState extends State<FeelingCard> {
   int? selectedEmoji;
   AnimatedEmojiData? _selectedAnimatedEmoji;
 
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color primaryPurple = Color(0xFF862AF5);
+
   @override
   Widget build(BuildContext context) {
     if (!widget.showEmojis) {
@@ -29,46 +30,50 @@ class _FeelingCardState extends State<FeelingCard> {
   }
 
   // =============================================
-  // 🔥 کارت خودم
+  // 🔥 کارت خودم (تم صورتی)
   // =============================================
   Widget _buildMyCard() {
     final cache = context.watch<CoupleCacheProvider>();
     return Container(
       height: 240,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.surfacePrimary, AppColors.periodBackground],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowLight, blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         children: [
+          // ردیف ایموجی‌ها
           Container(
-            height: 50,
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: const BoxDecoration(
-              color: Color.fromARGB(240, 240, 240, 236),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+              border: Border(
+                bottom: BorderSide(
+                  color: Color(0xFFF5F5F5),
+                  width: 1,
+                ),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _emojiButton(0, AnimatedEmojis.smileWithBigEyes),
-                _emojiButton(1, AnimatedEmojis.bigFrown),
-                _emojiButton(2, AnimatedEmojis.angry),
-                _emojiButton(3, AnimatedEmojis.cooking),
-                _emojiButton(4, AnimatedEmojis.neutralFace),
-                _emojiButton(5, AnimatedEmojis.fire),
+                _emojiButton(0, AnimatedEmojis.smileWithBigEyes, primaryPink),
+                _emojiButton(1, AnimatedEmojis.bigFrown, primaryPink),
+                _emojiButton(2, AnimatedEmojis.angry, primaryPink),
+                _emojiButton(3, AnimatedEmojis.cooking, primaryPink),
+                _emojiButton(4, AnimatedEmojis.neutralFace, primaryPink),
+                _emojiButton(5, AnimatedEmojis.fire, primaryPink),
               ],
             ),
           ),
+          // عدد بزرگ و ایموجی
           Expanded(
             child: Center(
               child: Column(
@@ -79,7 +84,7 @@ class _FeelingCardState extends State<FeelingCard> {
                     style: const TextStyle(
                       fontSize: 44,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primaryDark,
+                      color: primaryPink,
                     ),
                   ),
                   if (_selectedAnimatedEmoji != null) ...[
@@ -96,7 +101,7 @@ class _FeelingCardState extends State<FeelingCard> {
   }
 
   // =============================================
-  // 🔥 کارت پارتنر
+  // 🔥 کارت پارتنر (تم بنفش)
   // =============================================
   Widget _buildPartnerCard(BuildContext context) {
     final cache = context.watch<CoupleCacheProvider>();
@@ -129,27 +134,28 @@ class _FeelingCardState extends State<FeelingCard> {
     return Container(
       height: 240,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.surfacePrimary, AppColors.periodBackground],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowLight, blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         children: [
-          // 🔥 هدر: آواتار + شمارنده
+          // هدر: آواتار + شمارنده
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
               children: [
+                // آواتار با تم بنفش
                 const CircleAvatar(
                   radius: 22,
-                  backgroundColor: Color(0x26E87984),
-                  child: Icon(Icons.person, size: 28, color: AppColors.primary),
+                  backgroundColor: Color(0x1F862AF5), // بنفش ۱۲٪
+                  child: Icon(Icons.person, size: 28, color: primaryPurple),
                 ),
                 const Spacer(),
                 if (cache.missYouCount > 0)
@@ -157,7 +163,7 @@ class _FeelingCardState extends State<FeelingCard> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: primaryPurple.withOpacity(0.06),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -168,16 +174,13 @@ class _FeelingCardState extends State<FeelingCard> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: primaryPurple,
                           ),
                         ),
                         const SizedBox(width: 4),
                         const Text(
                           '💕 دلتنگی',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.primary,
-                          ),
+                          style: TextStyle(fontSize: 10, color: primaryPurple),
                         ),
                       ],
                     ),
@@ -185,8 +188,7 @@ class _FeelingCardState extends State<FeelingCard> {
               ],
             ),
           ),
-
-          // 🔥 محتوا: ایموجی + حس
+          // حس و حال
           Expanded(
             child: Center(
               child: feeling.isNotEmpty
@@ -200,7 +202,8 @@ class _FeelingCardState extends State<FeelingCard> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.06),
+                            color: primaryPurple
+                                .withOpacity(0.05), // بنفش خیلی کمرنگ
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
@@ -208,7 +211,7 @@ class _FeelingCardState extends State<FeelingCard> {
                             style: const TextStyle(
                               fontFamily: 'Vazir',
                               fontSize: 14,
-                              color: AppColors.primary,
+                              color: primaryPurple,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -237,14 +240,14 @@ class _FeelingCardState extends State<FeelingCard> {
   }
 
   // =============================================
-  // 🔥 متدهای کمکی
+  // 🔥 دکمه ایموجی (با رنگ پویا)
   // =============================================
-  Widget _emojiButton(int index, AnimatedEmojiData emoji) {
+  Widget _emojiButton(int index, AnimatedEmojiData emoji, Color activeColor) {
     final isSelected = selectedEmoji == index;
     return GestureDetector(
       onTap: () {
         if (selectedEmoji != index) {
-          _showConfirmDialog(index, Icons.favorite, AppColors.primary);
+          _showConfirmDialog(index, activeColor);
         } else {
           setState(() {
             selectedEmoji = null;
@@ -254,22 +257,21 @@ class _FeelingCardState extends State<FeelingCard> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withOpacity(0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected
-              ? Border.all(color: AppColors.primary, width: 1.5)
-              : null,
+          color:
+              isSelected ? activeColor.withOpacity(0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: AnimatedEmoji(emoji, size: 20),
+        child: AnimatedEmoji(emoji, size: 22),
       ),
     );
   }
 
-  void _showConfirmDialog(int index, IconData icon, Color color) {
+  // =============================================
+  // 🔥 دیالوگ ارسال حس (با رنگ داده شده)
+  // =============================================
+  void _showConfirmDialog(int index, Color themeColor) {
     final feelingNames = [
       'خوشحالم 😊',
       'ناراحتم 😢',
@@ -291,7 +293,7 @@ class _FeelingCardState extends State<FeelingCard> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: AppColors.surfacePrimary,
+        backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -300,43 +302,36 @@ class _FeelingCardState extends State<FeelingCard> {
               AnimatedEmoji(feelingEmojis[index], size: 70),
               const SizedBox(height: 16),
               const Text('می‌خوای بهش بگی:',
-                  style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 16,
-                      color: AppColors.textPrimary)),
+                  style: TextStyle(fontSize: 16, color: Color(0xFF1A1A2E))),
               const SizedBox(height: 8),
               Text('«${feelingNames[index]}»',
-                  style: const TextStyle(
-                      fontFamily: 'Vazir',
+                  style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary)),
+                      color: themeColor)),
               const SizedBox(height: 8),
               const Text('این حس برای عشقت ارسال بشه؟',
-                  style: TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 14,
-                      color: AppColors.textHint)),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF8E8E98))),
               const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textHint,
+                          foregroundColor: Colors.grey,
+                          side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                           padding: const EdgeInsets.symmetric(vertical: 14)),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('نه',
-                          style: TextStyle(fontFamily: 'Vazir', fontSize: 14)),
+                      child: const Text('نه', style: TextStyle(fontSize: 14)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: themeColor,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                           padding: const EdgeInsets.symmetric(vertical: 14)),
@@ -346,13 +341,10 @@ class _FeelingCardState extends State<FeelingCard> {
                           selectedEmoji = index;
                           _selectedAnimatedEmoji = feelingEmojis[index];
                         });
-                        _showSentMessage(feelingNames[index]);
+                        _showSentMessage(feelingNames[index], themeColor);
                       },
                       child: const Text('آره، بفرست ❤️',
-                          style: TextStyle(
-                              fontFamily: 'Vazir',
-                              fontSize: 14,
-                              color: Colors.white)),
+                          style: TextStyle(fontSize: 14, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -378,7 +370,7 @@ class _FeelingCardState extends State<FeelingCard> {
                 Text('عشقت دلش برات تنگ شده!',
                     style: TextStyle(fontFamily: 'Vazir')),
               ]),
-              backgroundColor: AppColors.primary,
+              backgroundColor: primaryPink,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -390,13 +382,13 @@ class _FeelingCardState extends State<FeelingCard> {
     }
   }
 
-  void _showSentMessage(String feeling) {
+  void _showSentMessage(String feeling, Color color) {
     CoupleService.sendMood(feeling);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$feeling برای عشقت ارسال شد! ❤️',
             style: const TextStyle(fontFamily: 'Vazir')),
-        backgroundColor: AppColors.primary,
+        backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),

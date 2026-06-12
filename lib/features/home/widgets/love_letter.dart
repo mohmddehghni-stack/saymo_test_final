@@ -26,6 +26,16 @@ class _LoveLetterState extends State<LoveLetter>
 
   List<Map<String, dynamic>> _letters = [];
 
+  // رنگ‌های برند
+  static const Color primaryPink = Color(0xFFFE4773);
+  static const Color primaryPurple = Color(0xFF862AF5);
+  static const Color surfaceWhite = Colors.white;
+  static const Color textDark = Color(0xFF1A1A2E);
+  static const Color textGrey = Color(0xFF8E8E98);
+  static const Color softPinkBg = Color(0xFFFDF4F5);
+  static const Color softPurpleBg = Color(0xFFF2E8FF);
+  static const Color letterBg = Color(0xFFF9FA);
+
   Future<void> _loadLetters() async {
     try {
       final response = await http.get(
@@ -53,7 +63,7 @@ class _LoveLetterState extends State<LoveLetter>
     );
 
     _loadLetters();
-    SocketService.addHandler(_handleLoveLetter); // 🔥 اینو اضافه کن
+    SocketService.addHandler(_handleLoveLetter);
   }
 
   @override
@@ -88,13 +98,12 @@ class _LoveLetterState extends State<LoveLetter>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: AppColors.surfacePrimary,
+        backgroundColor: surfaceWhite,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // انیمیشن قلب تپنده
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.5, end: 1.0),
                 duration: const Duration(milliseconds: 600),
@@ -107,7 +116,7 @@ class _LoveLetterState extends State<LoveLetter>
                       width: 70,
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primaryDark]),
+                            colors: [primaryPink, primaryPurple]),
                         shape: BoxShape.circle,
                       ),
                       child:
@@ -119,24 +128,20 @@ class _LoveLetterState extends State<LoveLetter>
               const SizedBox(height: 16),
               const Text('📨 یه نامه برات اومد!',
                   style: TextStyle(
-                      fontFamily: 'Vazir',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
+                      color: textDark)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E7),
+                  color: softPurpleBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   text,
                   style: const TextStyle(
-                      fontFamily: 'Vazir',
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                      height: 1.5),
+                      fontSize: 14, color: textDark, height: 1.5),
                   textDirection: TextDirection.rtl,
                 ),
               ),
@@ -145,17 +150,14 @@ class _LoveLetterState extends State<LoveLetter>
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: primaryPink,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('خوندم ❤️',
-                      style: TextStyle(
-                          fontFamily: 'Vazir',
-                          fontSize: 16,
-                          color: Colors.white)),
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
             ],
@@ -179,7 +181,7 @@ class _LoveLetterState extends State<LoveLetter>
         return Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: AppColors.surfacePrimary,
+          backgroundColor: surfaceWhite,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -189,8 +191,8 @@ class _LoveLetterState extends State<LoveLetter>
                   height: 70,
                   width: 70,
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryDark]),
+                    gradient:
+                        LinearGradient(colors: [primaryPink, primaryPurple]),
                     shape: BoxShape.circle,
                   ),
                   child:
@@ -199,22 +201,18 @@ class _LoveLetterState extends State<LoveLetter>
                 const SizedBox(height: 16),
                 const Text('نامه‌ات ارسال شد! 💌',
                     style: TextStyle(
-                        fontFamily: 'Vazir',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
+                        color: textDark)),
                 const SizedBox(height: 8),
                 const Text('عشقت به دستش می‌رسه... 🕊️',
-                    style: TextStyle(
-                        fontFamily: 'Vazir',
-                        fontSize: 13,
-                        color: AppColors.textHint)),
+                    style: TextStyle(fontSize: 13, color: textGrey)),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: primaryPink,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -231,7 +229,6 @@ class _LoveLetterState extends State<LoveLetter>
                     },
                     child: const Text('باشه 😊',
                         style: TextStyle(
-                            fontFamily: 'Vazir',
                             fontSize: 16,
                             color: Colors.white,
                             fontWeight: FontWeight.bold)),
@@ -256,12 +253,11 @@ class _LoveLetterState extends State<LoveLetter>
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color:
-                _isOpen ? const Color(0xFFFFF8E7) : AppColors.periodBackground,
+            color: _isOpen ? letterBg : softPinkBg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                  color: AppColors.shadowLight,
+                  color: primaryPink.withOpacity(0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4)),
             ],
@@ -283,7 +279,7 @@ class _LoveLetterState extends State<LoveLetter>
             height: 50,
             width: 50,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: primaryPink,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.favorite, color: Colors.white, size: 28),
@@ -296,29 +292,23 @@ class _LoveLetterState extends State<LoveLetter>
               children: [
                 Text('نامه عاشقانه',
                     style: TextStyle(
-                        fontFamily: 'Vazir',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark)),
+                        color: textDark)),
                 SizedBox(height: 4),
                 Text('برای نوشتن کلیک کن... ✍️',
-                    style: TextStyle(
-                        fontFamily: 'Vazir',
-                        fontSize: 11,
-                        color: AppColors.textHint)),
+                    style: TextStyle(fontSize: 11, color: textGrey)),
               ],
             ),
           ),
-          // 🔥 آیکن پاکت با انیمیشن
-          // 🔥 آیکن پاکت به عنوان دکمه
           GestureDetector(
             onTap: () {
-              cache.markLettersRead(); // 🔥 آلارم رو خاموش کن
+              cache.markLettersRead();
               _showLettersList();
             },
             child: TweenAnimationBuilder<double>(
               tween: Tween(
-                begin: cache.hasNewLetters ? 0.8 : 1.0, // 🔥 از cache بخون
+                begin: cache.hasNewLetters ? 0.8 : 1.0,
                 end: cache.hasNewLetters ? 1.3 : 1.0,
               ),
               duration: const Duration(milliseconds: 800),
@@ -330,8 +320,8 @@ class _LoveLetterState extends State<LoveLetter>
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: cache.hasNewLetters
-                          ? Colors.red.withOpacity(0.1)
-                          : AppColors.primary.withOpacity(0.1),
+                          ? primaryPurple.withOpacity(0.1)
+                          : primaryPink.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Stack(
@@ -340,9 +330,8 @@ class _LoveLetterState extends State<LoveLetter>
                           cache.hasNewLetters
                               ? Icons.mark_email_unread
                               : Icons.mail_outline,
-                          color: cache.hasNewLetters
-                              ? Colors.red
-                              : AppColors.primary,
+                          color:
+                              cache.hasNewLetters ? primaryPurple : primaryPink,
                           size: 30,
                         ),
                         if (cache.hasNewLetters)
@@ -353,7 +342,7 @@ class _LoveLetterState extends State<LoveLetter>
                               width: 10,
                               height: 10,
                               decoration: const BoxDecoration(
-                                color: Colors.red,
+                                color: primaryPurple,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -393,9 +382,9 @@ class _LoveLetterState extends State<LoveLetter>
               const SizedBox(height: 16),
               const Text('💌 نامه‌های دریافتی',
                   style: TextStyle(
-                      fontFamily: 'Vazir',
                       fontSize: 18,
-                      fontWeight: FontWeight.bold)),
+                      fontWeight: FontWeight.bold,
+                      color: textDark)),
               const SizedBox(height: 16),
               Expanded(
                   child: _letters.isEmpty
@@ -406,10 +395,8 @@ class _LoveLetterState extends State<LoveLetter>
                               const Text('📭', style: TextStyle(fontSize: 48)),
                               const SizedBox(height: 8),
                               Text('هنوز نامه‌ای نداری',
-                                  style: TextStyle(
-                                      fontFamily: 'Vazir',
-                                      fontSize: 14,
-                                      color: Colors.grey.shade500)),
+                                  style:
+                                      TextStyle(fontSize: 14, color: textGrey)),
                             ],
                           ),
                         )
@@ -419,15 +406,12 @@ class _LoveLetterState extends State<LoveLetter>
                           itemBuilder: (context, index) {
                             final letter = _letters[index];
                             return GestureDetector(
-                              onTap: () {
-                                // 🔥 باز کردن نامه توی دیالوگ بزرگ
-                                _showLetterDetail(letter);
-                              },
+                              onTap: () => _showLetterDetail(letter),
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF8E7),
+                                  color: softPurpleBg,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
@@ -436,23 +420,20 @@ class _LoveLetterState extends State<LoveLetter>
                                     Row(
                                       children: [
                                         const Icon(Icons.mail,
-                                            color: AppColors.primary, size: 22),
+                                            color: primaryPurple, size: 22),
                                         const SizedBox(width: 10),
                                         Text(
                                           'نامه ${_letters.length - index}',
                                           style: const TextStyle(
-                                              fontFamily: 'Vazir',
                                               fontSize: 13,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.primaryDark),
+                                              color: primaryPink),
                                         ),
                                         const Spacer(),
                                         Text(
                                           letter['created_at'] ?? '',
                                           style: const TextStyle(
-                                              fontFamily: 'Vazir',
-                                              fontSize: 11,
-                                              color: Colors.grey),
+                                              fontSize: 11, color: textGrey),
                                         ),
                                       ],
                                     ),
@@ -460,9 +441,7 @@ class _LoveLetterState extends State<LoveLetter>
                                     Text(
                                       letter['text'] ?? '',
                                       style: const TextStyle(
-                                          fontFamily: 'Vazir',
-                                          fontSize: 15,
-                                          height: 1.6),
+                                          fontSize: 15, height: 1.6),
                                       textDirection: TextDirection.rtl,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -479,7 +458,6 @@ class _LoveLetterState extends State<LoveLetter>
       },
     );
 
-    // 🔥 بعد از باز کردن، آلارم رو خاموش کن
     cache.markLettersRead();
   }
 
@@ -539,7 +517,6 @@ class _LoveLetterState extends State<LoveLetter>
             borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                // خطوط دفتر
                 ...List.generate(20, (index) {
                   return Positioned(
                     top: 16.0 + (index * 28),
@@ -547,21 +524,17 @@ class _LoveLetterState extends State<LoveLetter>
                     right: 20,
                     child: Container(
                       height: 1,
-                      color: const Color(0xFFE8D5B7).withOpacity(0.4),
+                      color: primaryPurple.withOpacity(0.08),
                     ),
                   );
                 }),
-
-                // حاشیه قرمز
                 Positioned(
                   top: 0,
                   bottom: 0,
                   left: 32,
-                  child:
-                      Container(width: 1.5, color: Colors.red.withOpacity(0.2)),
+                  child: Container(
+                      width: 1.5, color: primaryPink.withOpacity(0.3)),
                 ),
-
-                // متن
                 Positioned.fill(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(42, 20, 20, 20),
@@ -576,10 +549,9 @@ class _LoveLetterState extends State<LoveLetter>
                           child: Text(
                             letter['text'] ?? '',
                             style: const TextStyle(
-                              fontFamily: 'Vazir',
                               fontSize: 16,
                               height: 2.0,
-                              color: AppColors.textPrimary,
+                              color: textDark,
                             ),
                             textDirection: TextDirection.rtl,
                           ),
@@ -588,8 +560,6 @@ class _LoveLetterState extends State<LoveLetter>
                     ),
                   ),
                 ),
-
-                // 🔥 دکمه برگشت - بالا چپ
                 Positioned(
                   top: 12,
                   left: 12,
@@ -629,14 +599,13 @@ class _LoveLetterState extends State<LoveLetter>
         children: [
           Row(
             children: [
-              const Icon(Icons.favorite, color: AppColors.primary, size: 18),
+              const Icon(Icons.favorite, color: primaryPink, size: 18),
               const SizedBox(width: 8),
               const Text('نامه من به تو...',
                   style: TextStyle(
-                      fontFamily: 'Vazir',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryDark)),
+                      color: textDark)),
               const Spacer(),
               GestureDetector(
                 onTap: _toggleEnvelope,
@@ -644,10 +613,9 @@ class _LoveLetterState extends State<LoveLetter>
                   height: 30,
                   width: 30,
                   decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: primaryPink.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.close,
-                      color: AppColors.primary, size: 16),
+                  child: const Icon(Icons.close, color: primaryPink, size: 16),
                 ),
               ),
             ],
@@ -658,7 +626,7 @@ class _LoveLetterState extends State<LoveLetter>
             decoration: BoxDecoration(
               color: const Color(0xFFFFFDF5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              border: Border.all(color: primaryPink.withOpacity(0.2)),
             ),
             child: Stack(
               children: [
@@ -668,7 +636,7 @@ class _LoveLetterState extends State<LoveLetter>
                     left: 12,
                     right: 12,
                     child: Container(
-                        height: 1, color: AppColors.primary.withOpacity(0.1)),
+                        height: 1, color: primaryPurple.withOpacity(0.1)),
                   );
                 }),
                 Padding(
@@ -679,16 +647,10 @@ class _LoveLetterState extends State<LoveLetter>
                     textDirection: TextDirection.rtl,
                     maxLines: 5,
                     style: const TextStyle(
-                        fontFamily: 'Vazir',
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
-                        height: 1.55),
+                        fontSize: 14, color: textDark, height: 1.55),
                     decoration: const InputDecoration(
                       hintText: 'از دل بنویس... ❤️',
-                      hintStyle: TextStyle(
-                          fontFamily: 'Vazir',
-                          fontSize: 13,
-                          color: AppColors.textHint),
+                      hintStyle: TextStyle(fontSize: 13, color: textGrey),
                       border: InputBorder.none,
                     ),
                   ),
@@ -707,11 +669,11 @@ class _LoveLetterState extends State<LoveLetter>
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryDark]),
+                        colors: [primaryPink, primaryPurple]),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: primaryPink.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3))
                     ],
@@ -721,7 +683,6 @@ class _LoveLetterState extends State<LoveLetter>
                     children: [
                       Text('ارسال',
                           style: TextStyle(
-                              fontFamily: 'Vazir',
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.bold)),

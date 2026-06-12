@@ -76,11 +76,9 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 گوش دادن به PeriodProvider
     final pp = context.watch<PeriodProvider>();
     final cache = context.watch<CoupleCacheProvider>();
 
-    // 🔥 تعیین فاز بر اساس داده‌های واقعی
     String newPhase = 'default';
     if (pp.isSetupDone) {
       final phase = pp.currentPhase;
@@ -97,7 +95,6 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
       }
     }
 
-    // 🔥 اگه حس جدید از پارتنر اومده، بر اساس اون پیشنهاد بده
     if (cache.partnerFeeling.isNotEmpty) {
       if (cache.partnerFeeling.contains('ناراحت')) {
         newPhase = 'pms';
@@ -120,17 +117,14 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 255, 0, 0).withOpacity(0.06),
+        color: AppColors.primary.withOpacity(0.06), // 🔥 از قرمز به صورتی برند
         borderRadius: const BorderRadius.only(
-          // 🔥 فقط پایین گرد
           bottomLeft: Radius.circular(16),
           bottomRight: Radius.circular(16),
         ),
-        // بالا صاف می‌مونه
       ),
       child: Row(
         children: [
-          // 🔥 آیکن پالسی
           AnimatedBuilder(
             animation: _pulseController,
             builder: (context, child) {
@@ -146,7 +140,6 @@ class _SuggestionWidgetState extends State<SuggestionWidget>
             },
           ),
           const SizedBox(width: 12),
-          // متن پیشنهاد
           Expanded(
             child: Text(
               _currentSuggestion,

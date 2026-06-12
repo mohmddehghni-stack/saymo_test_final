@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/providers/app_provider.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
@@ -18,6 +17,10 @@ class _HeaderState extends State<Header> {
   bool isCounting = false;
   Duration elapsed = Duration.zero;
   Timer? _timer;
+
+  static const Color primaryPink = Color(0xFFFE4773);
+  // دقیقاً همون رنگ selectedCardBg از AddMomentSheet
+  static const Color headerBg = Color.fromARGB(255, 255, 244, 244);
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
@@ -42,20 +45,19 @@ class _HeaderState extends State<Header> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.periodBackground,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-        boxShadow: [
-          BoxShadow(color: AppColors.shadowMedium, blurRadius: 10),
-        ],
+      decoration: const BoxDecoration(
+        color: headerBg, // پس‌زمینه صورتی لطیف
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Row(
         children: [
-          IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
+          IconButton(
+            icon: const Icon(Icons.menu, color: Color(0xFF1A1A2E)),
+            onPressed: widget.onMenuTap,
+          ),
           const Spacer(),
           !isCounting ? _buildDatePicker() : _buildCounter(),
           const Spacer(),
-          // 🔥 آواتار جدید
           UserAvatar(
             username: appProvider.username ?? 'کاربر',
             gender: appProvider.gender ?? 'male',
@@ -79,8 +81,8 @@ class _HeaderState extends State<Header> {
           builder: (context, child) {
             return Theme(
               data: ThemeData.light().copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: AppColors.primaryDark,
+                colorScheme: ColorScheme.light(
+                  primary: primaryPink,
                   onPrimary: Colors.white,
                   onSurface: Colors.black,
                 ),
@@ -115,20 +117,20 @@ class _HeaderState extends State<Header> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.surfacePrimary,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primaryDark.withOpacity(0.3)),
+          border: Border.all(color: primaryPink.withOpacity(0.3)),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.favorite, color: AppColors.primaryDark, size: 18),
-            SizedBox(width: 6),
-            Text('تاریخ شروع رابطه',
+            const Icon(Icons.favorite, color: primaryPink, size: 18),
+            const SizedBox(width: 6),
+            const Text('تاریخ شروع رابطه',
                 style: TextStyle(
                     fontSize: 13,
                     fontFamily: 'Vazir',
-                    color: AppColors.textPrimary)),
+                    color: Color(0xFF1A1A2E))),
           ],
         ),
       ),
@@ -147,9 +149,9 @@ class _HeaderState extends State<Header> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfacePrimary,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primaryDark.withOpacity(0.3)),
+        border: Border.all(color: primaryPink.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -157,11 +159,10 @@ class _HeaderState extends State<Header> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.primaryDark.withOpacity(0.1),
+              color: primaryPink.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.favorite,
-                color: AppColors.primaryDark, size: 14),
+            child: const Icon(Icons.favorite, color: primaryPink, size: 14),
           ),
           const SizedBox(width: 8),
           Column(
@@ -173,14 +174,12 @@ class _HeaderState extends State<Header> {
                     fontSize: 11,
                     fontFamily: 'Vazir',
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary),
+                    color: Color(0xFF1A1A2E)),
               ),
               Text(
                 '${_twoDigits(hours)}:${_twoDigits(minutes)}:${_twoDigits(seconds)}',
                 style: const TextStyle(
-                    fontSize: 10,
-                    fontFamily: 'Vazir',
-                    color: AppColors.primaryDark),
+                    fontSize: 10, fontFamily: 'Vazir', color: primaryPink),
               ),
             ],
           ),
