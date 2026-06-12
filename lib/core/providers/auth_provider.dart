@@ -24,6 +24,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPublicId(String? id) {
+    _publicId = id;
+    notifyListeners();
+  }
+
   void setCode(String value) {
     _code = value;
     notifyListeners();

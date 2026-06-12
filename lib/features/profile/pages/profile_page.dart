@@ -12,11 +12,13 @@ import '../widgets/theme_section.dart';
 import '../widgets/support_button.dart';
 import '../widgets/logout_dialog.dart';
 import '../widgets/partner_info_card.dart';
+import '../widgets/profile_shimmer.dart'; // 🔥 Shimmer جدید
 import 'package:flutter_application_1/shared/widgets/avatar_picker_dialog.dart';
 import 'package:flutter_application_1/shared/services/image_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/features/auth/pages/welcome_screen.dart';
-import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
+import 'package:flutter_application_1/core/theme/app_theme.dart';
+import 'package:flutter_application_1/core/providers/auth_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,37 +28,39 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Map<String, dynamic>? _userData;
-  bool _isLoading = true;
   bool _isUploading = false;
+  bool _didInitialLoad = false; // 🔥 به‌جای _isLoading
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    final appProvider = context.read<AppProvider>();
+    if (appProvider.profileLoaded) {
+      _didInitialLoad = true;
+    } else {
+      _loadProfileOnce().then((_) => appProvider.setProfileLoaded());
+    }
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadProfileOnce() async {
     try {
       final response = await ApiService.getProfile();
+      if (!mounted) return;
       if (response['user'] != null) {
         final user = response['user'];
         final appProvider = context.read<AppProvider>();
-
-        if (user['display_name'] != null) {
+        if (user['display_name'] != null)
           appProvider.setDisplayName(user['display_name']);
-        }
-        if (user['username'] != null) {
-          appProvider.setUsername(user['username']);
-        }
-        if (user['avatar_url'] != null) {
+        if (user['username'] != null) appProvider.setUsername(user['username']);
+        if (user['avatar_url'] != null)
           appProvider.setAvatarUrl(user['avatar_url']);
-        }
-
-        if (user['couple_id'] != null) {
+        if (user['phone'] != null) appProvider.setPhone(user['phone']);
+        if (user['public_id'] != null)
+          appProvider.setPublicId(user['public_id']);
+        if (user['couple_id'] != null)
           appProvider.setCoupleId(user['couple_id']);
-        }
-
+        // در صورت نیاز به شماره تلفن، آن را هم در AppProvider ذخیره کنید
+        // if (user['phone'] != null) appProvider.setPhone(user['phone']);
         final partner = response['partner'];
         if (partner != null) {
           appProvider.connectPartner(
@@ -66,25 +70,18 @@ class _ProfilePageState extends State<ProfilePage> {
             partnerGender: partner['gender'],
           );
         }
-
-        setState(() {
-          _userData = user;
-          _isLoading = false;
-        });
       }
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
+    } catch (_) {}
+    if (mounted) setState(() => _didInitialLoad = true);
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
-    // 🔥 دریافت تم برای دیالوگ
     final appTheme = Theme.of(context).extension<AppTheme>();
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: appTheme?.cardBackground ?? Colors.white, // 👈
+        backgroundColor: appTheme?.cardBackground ?? Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -106,7 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontFamily: 'Vazir',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: appTheme?.textPrimary ?? Colors.black)), // 👈
+                      color: appTheme?.textPrimary ?? Colors.black)),
               const SizedBox(height: 8),
               Text(
                   'این عملیات غیرقابل بازگشته!\nهمه اطلاعاتت برای همیشه پاک میشه 💔',
@@ -114,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(
                       fontFamily: 'Vazir',
                       fontSize: 13,
-                      color: appTheme?.textHint ?? Colors.black54)), // 👈
+                      color: appTheme?.textHint ?? Colors.black54)),
               const SizedBox(height: 20),
               Row(children: [
                 Expanded(
@@ -178,22 +175,21 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
-    // 🔥 دریافت تم
     final appTheme = Theme.of(context).extension<AppTheme>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    // 🔥 به‌جای CircularProgressIndicator، شمر نشان بده
+    if (!_didInitialLoad) {
+      return Scaffold(
+        backgroundColor: appTheme?.surfaceBackground ?? const Color(0xfff5f5f5),
+        body: const SafeArea(child: ProfileShimmer()),
+      );
     }
-
-    final user = _userData ?? {};
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Stack(
         children: [
           Scaffold(
-            // 👇 پس‌زمینه Scaffold
             backgroundColor:
                 appTheme?.surfaceBackground ?? const Color(0xfff5f5f5),
             body: SafeArea(
@@ -204,16 +200,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       username: appProvider.displayName ??
                           appProvider.username ??
                           'کاربر',
-                      userId: _userData?['public_id'] ?? '',
-                      gender: _userData?['gender'] ?? 'male',
-                      imageUrl: _userData?['avatar_url'],
+                      userId: appProvider.publicId ?? '',
+                      gender: appProvider.gender ?? 'male',
+                      imageUrl: appProvider.avatarUrl, // 👈 از AppProvider
                       onLogout: () => showLogoutDialog(context),
                       onCameraTap: () async {
+                        final hasAvatar = appProvider.avatarUrl != null &&
+                            appProvider.avatarUrl!.isNotEmpty;
                         final result = await AvatarPickerDialog.show(context,
-                            hasImage: _userData?['avatar_url'] != null);
+                            hasImage: hasAvatar);
 
                         if (result == 'delete') {
-                          setState(() => _userData?.remove('avatar_url'));
                           appProvider.setAvatarUrl(null);
                           try {
                             await http.post(
@@ -224,48 +221,32 @@ class _ProfilePageState extends State<ProfilePage> {
                                 'Authorization': 'Bearer ${ApiService.token}',
                               },
                             );
-                          } catch (e) {}
+                          } catch (_) {}
                         } else if (result != null && mounted) {
                           setState(() => _isUploading = true);
 
                           final avatarUrl =
                               await ImageService.uploadAvatar(result);
-
                           if (!mounted) return;
 
-                          setState(() {
-                            if (avatarUrl != null) {
-                              if (_userData != null) {
-                                _userData!['avatar_url'] = avatarUrl;
-                              } else {
-                                _userData = {'avatar_url': avatarUrl};
-                              }
-                            }
-                            _isUploading = false;
-                          });
-
+                          setState(() => _isUploading = false);
                           if (avatarUrl != null) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted) {
-                                appProvider.setAvatarUrl(avatarUrl);
-                              }
-                            });
+                            appProvider.setAvatarUrl(avatarUrl);
                           } else {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'آپلود ناموفق بود. لطفاً دوباره تلاش کنید.',
-                                        style: TextStyle(fontFamily: 'Vazir'))),
-                              );
-                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'آپلود ناموفق بود. لطفاً دوباره تلاش کنید.',
+                                    style: TextStyle(fontFamily: 'Vazir')),
+                              ),
+                            );
                           }
                         }
                       },
                     ),
                     const SizedBox(height: 16),
                     ProfileIdCard(
-                      publicId: user['public_id'] ?? '',
+                      publicId: appProvider.publicId ?? '',
                       onCopy: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -286,8 +267,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ProfileInfoCard(
                       displayName: appProvider.displayName ?? '',
                       username: appProvider.username ?? '',
-                      phone: _userData?['phone'] ?? '',
-                      gender: _userData?['gender'] ?? '',
+                      phone: appProvider.phone ?? '',
+                      gender: appProvider.gender ?? '',
                     ),
                     const SizedBox(height: 12),
                     ProfilePartnerCard(
@@ -350,6 +331,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             bottomNavigationBar: buildBottomNav(context, activePage: 'profile'),
           ),
+          // 🔥 لودینگ آپلود عکس (کاملاً دست‌نخورده)
           if (_isUploading)
             Container(
               color: Colors.black.withOpacity(0.3),

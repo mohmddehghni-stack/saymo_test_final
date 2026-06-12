@@ -7,6 +7,7 @@ import '../../features/profile/pages/profile_page.dart';
 import '../pages/support_page.dart';
 import 'package:flutter_application_1/shared/widgets/user_avatar.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
+import 'package:flutter_application_1/shared/widgets/navigation_helper.dart';
 
 class SideMenu extends StatefulWidget {
   final VoidCallback onClose;
@@ -156,10 +157,7 @@ class _SideMenuState extends State<SideMenu>
                             textColor: textColor,
                             onTap: () {
                               _closeWithAnimation();
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const ProfilePage()));
+                              navigateTo(context, const ProfilePage());
                             }),
                         _MenuItem(
                             icon: Icons.settings_outlined,
@@ -180,10 +178,7 @@ class _SideMenuState extends State<SideMenu>
                             textColor: textColor,
                             onTap: () {
                               _closeWithAnimation();
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const SupportPage()));
+                              navigateTo(context, const SupportPage());
                             }),
                         _MenuItem(
                             icon: Icons.info_outline_rounded,

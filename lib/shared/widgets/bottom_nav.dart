@@ -4,6 +4,7 @@ import '../../features/home/pages/home_page.dart';
 import '../../features/calendar/pages/calendar_page.dart';
 import '../../features/profile/pages/profile_page.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart'; // 🔥 اضافه شد
+import 'package:flutter_application_1/shared/widgets/navigation_helper.dart';
 
 Widget buildBottomNav(
   BuildContext context, {
@@ -47,10 +48,7 @@ Widget buildBottomNav(
               isActive: activePage == 'home',
               onTap: () {
                 if (activePage != 'home') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomePage()),
-                  );
+                  navigateTo(context, const HomePage());
                 }
               },
               inactiveColor: inactiveColor, // 👈
@@ -61,10 +59,7 @@ Widget buildBottomNav(
               isActive: activePage == 'calendar',
               onTap: () {
                 if (activePage != 'calendar') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CalendarPage()),
-                  );
+                  navigateTo(context, const CalendarPage());
                 }
               },
               inactiveColor: inactiveColor, // 👈
@@ -84,10 +79,7 @@ Widget buildBottomNav(
               isActive: activePage == 'profile',
               onTap: () {
                 if (activePage != 'profile') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfilePage()),
-                  );
+                  navigateTo(context, const ProfilePage());
                 }
               },
               inactiveColor: inactiveColor, // 👈

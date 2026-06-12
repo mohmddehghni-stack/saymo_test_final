@@ -293,6 +293,7 @@ class _CalendarPageState extends State<CalendarPage>
             : null;
 
     return Scaffold(
+      key: ValueKey('calendar_${isDark ? 'dark' : 'light'}'),
       extendBody: true,
       // 👇 پس‌زمینه: در تم روشن softBg، در تم تاریک سطح پس‌زمینهٔ AppTheme
       backgroundColor: isDark

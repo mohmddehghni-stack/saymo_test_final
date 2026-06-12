@@ -3,6 +3,7 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'dashed_border_painter.dart';
 import '../../calendar/pages/calendar_page.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
+import 'package:flutter_application_1/shared/widgets/navigation_helper.dart';
 
 class CalendarCapsule extends StatelessWidget {
   final String title;
@@ -23,12 +24,7 @@ class CalendarCapsule extends StatelessWidget {
     final appTheme = Theme.of(context).extension<AppTheme>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CalendarPage()),
-        );
-      },
+      onTap: () => navigateTo(context, const CalendarPage()),
       child: Stack(
         children: [
           // اول Container

@@ -24,6 +24,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/shared/services/notification_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_application_1/core/providers/theme_provider.dart';
+import 'package:flutter_application_1/features/auth/pages/splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -263,11 +264,9 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: SplashPage(
-        nextPage: appProvider.userId != null && appProvider.userId!.isNotEmpty
-            ? const HomePage()
-            : const WelcomePage(),
-      ),
+      home: appProvider.userId != null && appProvider.userId!.isNotEmpty
+          ? const HomePage()
+          : const SplashPage(),
       routes: {
         '/register': (context) => const RegisterNewPage(),
         '/register-chat': (context) => const RegisterChatPage(),

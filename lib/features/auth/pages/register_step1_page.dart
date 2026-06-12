@@ -3,6 +3,7 @@ import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/providers/registration_provider.dart';
 import 'package:flutter_application_1/shared/services/api_service.dart';
+import 'dart:math' as math;
 
 class RegisterStep1Page extends StatefulWidget {
   const RegisterStep1Page({super.key});
@@ -12,7 +13,7 @@ class RegisterStep1Page extends StatefulWidget {
 }
 
 class _RegisterStep1PageState extends State<RegisterStep1Page>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _displayController = TextEditingController();
   final _usernameController = TextEditingController();
   final _displayFocus = FocusNode();
@@ -20,6 +21,7 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
 
   late AnimationController _bounceAnim;
   late Animation<double> _bounceScale;
+  late AnimationController _rotateController;
 
   String? _usernameError;
   bool _isChecking = false;
@@ -39,6 +41,11 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
     _bounceScale = Tween(begin: 0.97, end: 1.0).animate(
       CurvedAnimation(parent: _bounceAnim, curve: Curves.easeInOut),
     );
+
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
   }
 
   void _onUsernameChanged(String v) {
@@ -74,6 +81,7 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
     _displayFocus.dispose();
     _usernameFocus.dispose();
     _bounceAnim.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
@@ -87,236 +95,371 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBFB),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // 🔥 پس‌زمینه تزئینی
-            Positioned(
-              top: -80,
-              right: -80,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.06),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+      body: Stack(
+        children: [
+          // پس‌زمینهٔ سه‌رنگ (بدون تغییر)
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xffFFE0EC),
+                  Color(0xffF2E8FF),
+                  Color(0xffE0F0FF),
+                ],
               ),
             ),
-            Positioned(
-              bottom: -60,
-              left: -60,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryDark.withOpacity(0.05),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          ),
 
-            // 🔥 محتوای اصلی
-            SingleChildScrollView(
+          // دایره‌های چرخان (حفظ شده)
+          Positioned(
+            top: -100,
+            left: -100,
+            child: RotationTransition(
+              turns: _rotateController,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xffFF6FAE).withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -120,
+            right: -80,
+            child: RotationTransition(
+              turns: _rotateController,
+              child: Container(
+                width: 350,
+                height: 350,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xffB57BFF).withOpacity(0.25),
+                      Colors.transparent,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ذرات ستاره‌ای به‌جای قلب
+          ...List.generate(10, (index) {
+            final rng = math.Random(index);
+            return Positioned(
+              top: rng.nextDouble() * size.height * 0.7,
+              left: rng.nextDouble() * size.width * 0.9,
+              child: Opacity(
+                opacity: 0.15 + rng.nextDouble() * 0.2,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xffB57BFF).withOpacity(0.6),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.star_rounded,
+                    size: 8 + rng.nextDouble() * 14,
+                    color: const Color(0xffFF6FAE),
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          SafeArea(
+            child: SingleChildScrollView(
               padding: EdgeInsets.only(
-                top: size.height * 0.06,
+                top: size.height * 0.05,
                 left: 28,
                 right: 28,
                 bottom: 32,
               ),
               child: Column(
                 children: [
-                  // 🔥 کارت بالا: نام نمایشی
+                  // ستارهٔ جادویی به‌جای قلب
                   AnimatedBuilder(
                     animation: _bounceAnim,
                     builder: (_, child) => Transform.scale(
                       scale: _bounceScale.value,
                       child: child,
                     ),
-                    child: _buildCard(
-                      emoji: '💕',
-                      title: 'عشقت چی صدات می‌کنه؟',
-                      subtitle: 'یه اسم قشنگ انتخاب کن',
-                      child: TextField(
-                        controller: _displayController,
-                        focusNode: _displayFocus,
-                        textAlign: TextAlign.center,
-                        textDirection: TextDirection.rtl,
-                        style: const TextStyle(
-                          fontFamily: 'Vazir',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A2E),
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xffFF6FAE).withOpacity(0.3),
+                            const Color(0xffB57BFF).withOpacity(0.1),
+                          ],
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'مثلاً: عزیزم، ممد، سارا',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Vazir',
-                            fontSize: 14,
-                            color: Colors.grey.shade400,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.6),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xffB57BFF).withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                          border: InputBorder.none,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onChanged: (v) {
-                          p.setDisplayName(v);
-                          if (v.length >= 2 && !_showUsername) {
-                            setState(() => _showUsername = true);
-                            Future.delayed(const Duration(milliseconds: 400),
-                                () {
-                              _usernameFocus.requestFocus();
-                            });
-                          }
-                        },
-                        onSubmitted: (_) => _usernameFocus.requestFocus(),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        size: 42,
+                        color: Color(0xffB57BFF),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 36),
 
-                  const SizedBox(height: 20),
-
-                  // 🔥 کارت پایین: نام کاربری
-                  if (_showUsername)
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: 1),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOutBack,
-                      builder: (_, v, child) => Opacity(
-                        opacity: v,
-                        child: Transform.scale(scale: v, child: child),
-                      ),
-                      child: _buildCard(
-                        emoji: '👤',
-                        title: 'یه اسم کاربری انتخاب کن',
-                        subtitle: 'فقط انگلیسی و اعداد',
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _usernameController,
-                              focusNode: _usernameFocus,
-                              textAlign: TextAlign.center,
-                              textDirection: TextDirection.ltr,
-                              style: const TextStyle(
-                                fontFamily: 'Vazir',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A1A2E),
-                                letterSpacing: 2,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'username',
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Vazir',
-                                  fontSize: 15,
-                                  color: Colors.grey.shade400,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              onChanged: _onUsernameChanged,
-                              onSubmitted: (_) {
-                                if (valid) p.nextStep();
-                              },
-                            ),
-                            if (_isChecking)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 8),
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            if (_usernameError != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  _usernameError!,
-                                  style: const TextStyle(
-                                    fontFamily: 'Vazir',
-                                    fontSize: 12,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ),
-                            if (p.username.length >= 3 &&
-                                _usernameError == null)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 8),
-                                child: Text(
-                                  '✅ قابل استفاده‌ست',
-                                  style: TextStyle(
-                                    fontFamily: 'Vazir',
-                                    fontSize: 12,
-                                    color: Color(0xFF4CAF50),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                  // عنوان جدید
+                  const Text(
+                    'اسم نمایشی تو چیه؟',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Vazir',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1A1A2E),
+                      height: 1.3,
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'چطور دوست داری صدات کنیم؟',
+                    style: TextStyle(
+                      fontFamily: 'Vazir',
+                      fontSize: 14,
+                      color: Color(0xFF8E8E98),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
 
-                  const SizedBox(height: 28),
+                  // کارت شیشه‌ای نام نمایشی
+                  _buildGlassCard(
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _displayController,
+                          focusNode: _displayFocus,
+                          textAlign: TextAlign.center,
+                          textDirection: TextDirection.rtl,
+                          style: const TextStyle(
+                            fontFamily: 'Vazir',
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'مثلاً سارا، علی، ممد',
+                            hintStyle: TextStyle(
+                              fontFamily: 'Vazir',
+                              fontSize: 14,
+                              color: Colors.grey.shade400,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 16),
+                          ),
+                          onChanged: (v) {
+                            p.setDisplayName(v);
+                            if (v.length >= 2 && !_showUsername) {
+                              setState(() => _showUsername = true);
+                              Future.delayed(const Duration(milliseconds: 400),
+                                  () {
+                                _usernameFocus.requestFocus();
+                              });
+                            }
+                          },
+                          onSubmitted: (_) => _usernameFocus.requestFocus(),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                  // 🔥 انتخاب جنسیت
-                  _buildGenderChips(p),
+                  const SizedBox(height: 30),
 
-                  const SizedBox(height: 32),
+                  // نام کاربری (بدون تغییر در ظاهر)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOut,
+                    child: _showUsername
+                        ? Column(
+                            children: [
+                              const Text(
+                                'یه اسم کاربری خاص',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Vazir',
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1A1A2E),
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'فقط انگلیسی و اعداد',
+                                style: TextStyle(
+                                  fontFamily: 'Vazir',
+                                  fontSize: 14,
+                                  color: Color(0xFF8E8E98),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              _buildGlassCard(
+                                child: Column(
+                                  children: [
+                                    TextField(
+                                      controller: _usernameController,
+                                      focusNode: _usernameFocus,
+                                      textAlign: TextAlign.center,
+                                      textDirection: TextDirection.ltr,
+                                      style: const TextStyle(
+                                        fontFamily: 'Vazir',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A1A2E),
+                                        letterSpacing: 2,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: 'username',
+                                        hintStyle: TextStyle(
+                                          fontFamily: 'Vazir',
+                                          fontSize: 14,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                vertical: 14, horizontal: 16),
+                                      ),
+                                      onChanged: _onUsernameChanged,
+                                      onSubmitted: (_) {
+                                        if (valid) p.nextStep();
+                                      },
+                                    ),
+                                    if (_isChecking)
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 8),
+                                        child: SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xffB57BFF)),
+                                        ),
+                                      ),
+                                    if (_usernameError != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          _usernameError!,
+                                          style: const TextStyle(
+                                            fontFamily: 'Vazir',
+                                            fontSize: 13,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    if (p.username.length >= 3 &&
+                                        _usernameError == null)
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          '✅ قابل استفاده‌ست',
+                                          style: TextStyle(
+                                            fontFamily: 'Vazir',
+                                            fontSize: 13,
+                                            color: Color(0xFF4CAF50),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
 
-                  // 🔥 دکمه ادامه
+                  const SizedBox(height: 40),
+
+                  // انتخاب جنسیت (با آیکن‌های خنثی‌تر)
+                  _buildGenderRings(p),
+
+                  const SizedBox(height: 44),
+
+                  // دکمه ادامه (بدون تغییر)
                   TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.8, end: 1.0),
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutBack,
+                    tween: Tween(begin: 0.9, end: 1.0),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.elasticOut,
                     builder: (_, v, child) =>
                         Transform.scale(scale: v, child: child),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              valid ? AppColors.primary : Colors.grey.shade300,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                    child: GestureDetector(
+                      onTap: valid ? () => p.nextStep() : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: valid
+                                ? [
+                                    const Color(0xffFF6FAE),
+                                    const Color(0xffB57BFF)
+                                  ]
+                                : [Colors.grey.shade400, Colors.grey.shade400],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          elevation: valid ? 4 : 0,
-                          shadowColor: AppColors.primary.withOpacity(0.4),
+                          boxShadow: valid
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xffB57BFF)
+                                        .withOpacity(0.7),
+                                    blurRadius: 22,
+                                    offset: const Offset(0, 10),
+                                  )
+                                ]
+                              : [],
                         ),
-                        onPressed: valid ? () => p.nextStep() : null,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'بعدی',
-                              style: TextStyle(
-                                fontFamily: 'Vazir',
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color:
-                                  valid ? Colors.white : Colors.grey.shade500,
-                            ),
-                          ],
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 36,
                         ),
                       ),
                     ),
@@ -324,63 +467,41 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCard({
-    required String emoji,
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
+  Widget _buildGlassCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.7),
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.8),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: const Color(0xffB57BFF).withOpacity(0.15),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: const Color(0xffFF6FAE).withOpacity(0.05),
+            blurRadius: 30,
+            offset: const Offset(0, -5),
           ),
         ],
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
       ),
-      child: Column(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 40)),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Vazir',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontFamily: 'Vazir',
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
+      child: child,
     );
   }
 
-  Widget _buildGenderChips(RegistrationProvider p) {
+  Widget _buildGenderRings(RegistrationProvider p) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -388,75 +509,122 @@ class _RegisterStep1PageState extends State<RegisterStep1Page>
           onTap: () => p.setGender('male'),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: p.gender == 'male' ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(30),
+              shape: BoxShape.circle,
+              gradient: p.gender == 'male'
+                  ? const LinearGradient(
+                      colors: [Color(0xffFF6FAE), Color(0xffB57BFF)])
+                  : const LinearGradient(
+                      colors: [Colors.transparent, Colors.transparent]),
               boxShadow: p.gender == 'male'
                   ? [
                       BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4)),
+                        color: const Color(0xffB57BFF).withOpacity(0.5),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      )
                     ]
-                  : [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
-                    ],
+                  : [],
             ),
-            child: Row(
-              children: [
-                const Text('👦', style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 8),
-                Text('پسر',
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.male_rounded,
+                    size: 48,
+                    color: Color(0xffB57BFF),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'پسر',
                     style: TextStyle(
                       fontFamily: 'Vazir',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: p.gender == 'male' ? Colors.white : Colors.black54,
-                    )),
-              ],
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: p.gender == 'male'
+                          ? const Color(0xffFF6FAE)
+                          : Colors.black45,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 24),
         GestureDetector(
           onTap: () => p.setGender('female'),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: p.gender == 'female' ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(30),
+              shape: BoxShape.circle,
+              gradient: p.gender == 'female'
+                  ? const LinearGradient(
+                      colors: [Color(0xffFF6FAE), Color(0xffB57BFF)])
+                  : const LinearGradient(
+                      colors: [Colors.transparent, Colors.transparent]),
               boxShadow: p.gender == 'female'
                   ? [
                       BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4)),
+                        color: const Color(0xffB57BFF).withOpacity(0.5),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      )
                     ]
-                  : [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
-                    ],
+                  : [],
             ),
-            child: Row(
-              children: [
-                const Text('👧', style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 8),
-                Text('دختر',
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.female_rounded,
+                    size: 48,
+                    color: Color(0xffB57BFF),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'دختر',
                     style: TextStyle(
                       fontFamily: 'Vazir',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          p.gender == 'female' ? Colors.white : Colors.black54,
-                    )),
-              ],
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: p.gender == 'female'
+                          ? const Color(0xffFF6FAE)
+                          : Colors.black45,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

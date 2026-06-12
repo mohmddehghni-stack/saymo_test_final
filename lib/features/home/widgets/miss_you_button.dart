@@ -55,6 +55,8 @@ class _MissYouButtonState extends State<MissYouButton>
     });
 
     widget.onPressed();
+    // 👇 اینو اضافه کن
+    context.read<CoupleCacheProvider>().incrementMyMissYou();
 
     // ارسال به سرور و رفرش
     CoupleService.sendMissYou().then((_) {

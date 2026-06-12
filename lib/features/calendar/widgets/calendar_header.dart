@@ -71,7 +71,7 @@ class CalendarHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _buildDateDisplay(cp)),
-                _buildAvatars(cp, appProvider),
+                _buildAvatars(cp, appProvider, isDark),
               ],
             ),
             const SizedBox(height: 14),
@@ -149,66 +149,76 @@ class CalendarHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatars(CalendarProvider cp, AppProvider appProvider) {
+  Widget _buildAvatars(
+      CalendarProvider cp, AppProvider appProvider, bool isDark) {
     final isOnline = appProvider.isConnected;
-    const double avatarSize = 50;
+
+    // رنگ جایگزین برای پس‌زمینه آواتارها (تا عکس لود بشه)
+    final Color placeholderColor = isDark
+        ? const Color(0xFF2A0A2E).withOpacity(0.6)
+        : const Color(0xFFE8456B).withOpacity(0.2);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // آواتارها
-        SizedBox(
-          width: 70,
-          height: 46,
-          child: Stack(
-            children: [
-              // 🔥 خودم (راست - تراز وسط)
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: UserAvatar(
-                    username: appProvider.username ?? 'کاربر',
-                    gender: appProvider.gender ?? 'male',
-                    imageUrl: appProvider.avatarUrl,
-                    size: 36, // کمی کوچک‌تر
-                  ),
-                ),
-              ),
-              // 🔥 پارتنر (چپ - تراز وسط - اورلب)
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: UserAvatar(
-                    username: appProvider.partnerUsername ?? 'پارتنر',
-                    gender: appProvider.gender == 'male' ? 'female' : 'male',
-                    imageUrl: appProvider.partnerAvatarUrl,
-                    size: 36,
+        RepaintBoundary(
+          child: SizedBox(
+            width: 70,
+            height: 46,
+            child: Stack(
+              children: [
+                // آواتار خودم
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: placeholderColor, // 👈 رنگ پس‌زمینه
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: UserAvatar(
+                      key: const ValueKey('my_avatar'),
+                      username: appProvider.username ?? 'کاربر',
+                      gender: appProvider.gender ?? 'male',
+                      imageUrl: appProvider.avatarUrl,
+                      size: 36,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                // آواتار پارتنر
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: placeholderColor,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: UserAvatar(
+                      key: const ValueKey('partner_avatar'),
+                      username: appProvider.partnerUsername ?? 'پارتنر',
+                      gender: appProvider.gender == 'male' ? 'female' : 'male',
+                      imageUrl: appProvider.partnerAvatarUrl,
+                      size: 36,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 6),
-        // 🔥 وضعیت آنلاین - وسط چین
+        // وضعیت آنلاین
         SizedBox(
-          width: 70, // هم عرض آواتارها
+          width: 70,
           child: Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,

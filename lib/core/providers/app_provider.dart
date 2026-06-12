@@ -27,6 +27,12 @@ class AppProvider extends ChangeNotifier {
   String? _partnerAvatarUrl;
   String? _partnerGender;
   String? _coupleId; // 🔥 جدید
+  String? _publicId;
+  String? get publicId => _publicId;
+  String? _phone;
+  String? get phone => _phone;
+  bool _profileLoaded = false;
+  bool get profileLoaded => _profileLoaded;
 
   int get feelingValue => _feelingValue;
   String get moodEmoji => _moodEmoji;
@@ -52,8 +58,23 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setProfileLoaded() {
+    _profileLoaded = true;
+    notifyListeners();
+  }
+
   void setPartnerOnline(bool online) {
     _isPartnerOnline = online;
+    notifyListeners();
+  }
+
+  void setPhone(String? value) {
+    _phone = value;
+    notifyListeners();
+  }
+
+  void setPublicId(String? id) {
+    _publicId = id;
     notifyListeners();
   }
 
