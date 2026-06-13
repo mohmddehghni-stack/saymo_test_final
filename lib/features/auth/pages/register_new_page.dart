@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/core/providers/registration_provider.dart';
-import '../widgets/registration_progress.dart';
 import 'register_step1_page.dart';
 import 'register_step2_page.dart';
 import 'register_step3_page.dart';
@@ -42,7 +40,6 @@ class _RegisterNewPageState extends State<RegisterNewPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<RegistrationProvider>();
 
-    // گوش دادن به تغییرات currentStep و رفتن به صفحه مربوطه
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageController.hasClients &&
           _pageController.page?.round() != provider.currentStep) {
@@ -53,23 +50,14 @@ class _RegisterNewPageState extends State<RegisterNewPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBFB),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            RegistrationProgress(currentStep: provider.currentStep),
-            const SizedBox(height: 30),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  RegisterStep1Page(),
-                  RegisterStep2Page(),
-                  RegisterStep3Page(),
-                  RegisterStep4Page(),
-                ],
-              ),
-            ),
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            RegisterStep1Page(),
+            RegisterStep2Page(),
+            RegisterStep3Page(),
+            RegisterStep4Page(),
           ],
         ),
       ),
